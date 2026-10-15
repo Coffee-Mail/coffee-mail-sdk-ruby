@@ -198,10 +198,10 @@ module OperationCases
       reply: [200, { "id" => "b1", "status" => "cancelled", "cancelledAt" => T0 }],
       call: ->(client) { client.broadcasts.cancel("b1") }, expect_data: ->(data) { data.cancelled_at.is_a?(Time) }),
     c(id: "RB-OPS-42", title: "senders.create", verb: "POST", path: "/senders",
-      reply: [201, { "id" => "se1", "email" => "app@x.com", "verificationToken" => "tok-secreto", "active" => false }],
+      reply: [201, { "id" => "se1", "email" => "app@x.com", "active" => false }],
       call: ->(client) { client.senders.create(email: "app@x.com", display_name: "App") },
       body: { "email" => "app@x.com", "displayName" => "App" },
-      expect_data: ->(data) { data.verification_token == "tok-secreto" && !data.inspect.include?("tok-secreto") }),
+      expect_data: ->(data) { data.id == "se1" && data.verification_token.nil? }),
     c(id: "RB-OPS-43", title: "senders.list", verb: "GET", path: "/senders",
       reply: [200, { "senders" => [{ "id" => "se1", "email" => "app@x.com" }] }],
       call: ->(client) { client.senders.list },
@@ -211,6 +211,18 @@ module OperationCases
       body: { "token" => UUID }, expect_data: ->(data) { data.email == "app@x.com" }),
     c(id: "RB-OPS-45", title: "senders.delete", verb: "DELETE", path: "/senders/se1", reply: [204, ""],
       call: ->(client) { client.senders.delete("se1") }, expect_data: NO_CONTENT_CHECK),
+    c(id: "RB-OPS-69", title: "senders.resend_verification", verb: "POST",
+      path: "/senders/se1/resend-verification", reply: [204, ""],
+      call: ->(client) { client.senders.resend_verification("se1") }, expect_data: NO_CONTENT_CHECK),
+    c(id: "RB-OPS-70", title: "broadcasts.create agendado", verb: "POST", path: "/broadcasts",
+      reply: [201, BROADCAST.merge("status" => "scheduled")],
+      call: lambda { |client|
+        client.broadcasts.create(audience_id: UUID, from_email: "app@x.com", template_id: UUID,
+                                 scheduled_at: Time.utc(2030, 1, 1, 10))
+      },
+      body: { "audienceId" => UUID, "fromEmail" => "app@x.com", "templateId" => UUID,
+              "scheduledAt" => "2030-01-01T10:00:00.000Z" },
+      expect_data: ->(data) { data.status == "scheduled" }),
     c(id: "RB-OPS-46", title: "suppressions.create", verb: "POST", path: "/suppressions", reply: [201, SUPPRESSION],
       call: lambda { |client|
         client.suppressions.create(email: "s@x.com", reason: "manual", expires_at: Time.utc(2027, 1, 1))

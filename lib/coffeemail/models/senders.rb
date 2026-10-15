@@ -2,7 +2,8 @@
 
 module CoffeeMail
   module Models
-    # Remetente verificado. `verification_token` só vem em `senders.create`.
+    # Remetente verificado. `verification_token` está depreciado: a API não devolve mais o token,
+    # que segue por e-mail ao endereço cadastrado.
     SenderDetail = Internal::Model.define(
       id: :string, email: :string, display_name: :string, verification_token: :string, verified_at: :time,
       active: :boolean, created_at: :time,

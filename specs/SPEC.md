@@ -153,7 +153,7 @@ Todas as rotas são relativas a `/v1/product`. Path params são posicionais; o r
 | RB-OPS-61 | `stats.get(**)` | GET `/stats` | domain_id, tag, start_date, end_date, granularity, period, email_type |
 | RB-OPS-62 | `client.introspect(force_refresh: false)` | GET `/auth/me/api-key` | `{id, name, organisation_id, scopes}`. O cache dura 5 min, protegido por `Mutex`. `client.invalidate_api_key_cache` limpa o cache |
 
-`preview_by_id` é composta e não conta como rota: são 61 rotas mais 1 composta.
+`preview_by_id` é composta e não conta como rota: são 62 rotas mais 1 composta (RB-OPS-69 acrescentou a 62ª).
 
 Requisitos transversais das operações:
 
@@ -165,6 +165,11 @@ Requisitos transversais das operações:
 | RB-OPS-66 | [M] | Enums são abertos: constantes String (`CoffeeMail::EmailStatus::DELIVERED`) e um valor desconhecido passa sem erro |
 | RB-OPS-67 | [M] | As respostas não documentadas no spec (`GET /audiences`, `GET` e `send` de broadcasts, `rotate-secret` e `/auth/me/api-key`) são modeladas pelo SDK Java e cobertas por teste |
 | RB-OPS-68 | [M] | O `list` com cursor expõe `next_cursor` (nil no fim). O `list` com offset expõe os itens e, em contacts, `total` |
+| RB-OPS-69 | [M] | `senders.resend_verification(id)` → POST `/senders/{id}/resend-verification` → 204: reenvia o e-mail de verificação com token novo; 409 vira `ConflictError` e 404 vira `NotFoundError` |
+| RB-OPS-70 | [M] | `broadcasts.create(scheduled_at:)` aceita `Time` ou String ISO 8601 e envia `scheduledAt`; a campanha nasce `scheduled` |
+| RB-OPS-71 | [M] | `BroadcastDetail#metrics` (`Models::BroadcastMetrics`: delivered, opened, clicked, bounced, failed, suppressed) vem preenchido em `broadcasts.get`; ausente vira `nil` |
+| RB-OPS-72 | [M] | `Contact#subscribed` é `false` quando o contato se descadastrou; ausente vira `nil`, que equivale a inscrito |
+| RB-OPS-73 | [S] | `SenderDetail#verification_token` fica `nil` em `senders.create`: a API não devolve mais o token, que segue por e-mail ao endereço cadastrado; o campo continua no modelo (depreciado) |
 
 ## 7. Webhooks — `RB-WHK`
 

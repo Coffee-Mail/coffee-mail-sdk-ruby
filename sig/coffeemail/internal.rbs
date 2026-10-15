@@ -87,6 +87,7 @@ module CoffeeMail
         SENDERS: String
         SENDERS_VERIFY: String
         SENDER: String
+        SENDER_RESEND_VERIFICATION: String
         SUPPRESSIONS: String
         SUPPRESSIONS_BULK: String
         SUPPRESSION: String
