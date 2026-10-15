@@ -11,6 +11,11 @@ Todas as mudanças relevantes deste projeto são documentadas aqui. O formato se
 - `BroadcastDetail#metrics` (`Models::BroadcastMetrics`) em `broadcasts.get` (RB-OPS-71).
 - `Contact#subscribed` (`false` quando o contato se descadastrou; `nil` equivale a inscrito) (RB-OPS-72).
 - `SenderDetail#verification_token` fica `nil` em `senders.create`: a API não devolve mais o token, que segue por e-mail ao endereço cadastrado (RB-OPS-73).
+- `domains.rotate_dkim(id)` inicia a rotação de DKIM (idempotente) e devolve `Models::DkimRotation` (RB-OPS-74).
+- `domains.set_tracking_domain(id, host:)` e `domains.remove_tracking_domain(id)` configuram o domínio de rastreamento e devolvem `Models::CustomHostStatus` (RB-OPS-75, RB-OPS-76).
+- `DomainDetail#dkim_rotation`, `#return_path`, `#tracking_domain` e `#tracking_domains_available` em `domains.get` (RB-OPS-77).
+- `DomainWarmup#status`, `#total_days`, `#started_at` e `#completed_at` em `domains.get_warmup_status` (RB-OPS-78).
+- Enums `CoffeeMail::DomainWarmupStatus` e `CoffeeMail::DnsRecordType` (RB-OPS-79).
 
 - `CoffeeMail::Client` com as 61 operações da API de produto, no mesmo contrato dos SDKs Node.js, Python, PHP, Java e Go: `emails`, `domains`, `templates`, `audiences` (com `contacts`), `broadcasts`, `senders`, `suppressions`, `webhooks` e `stats`, além da introspecção da chave com cache de 5 minutos.
 - Envelope `CoffeeMail::Response` (`data`/`error`, desestruturação, pattern matching e `unwrap!`) e hierarquia de erros com código canônico, `api_code`, `details` e `request_id`.
@@ -20,3 +25,7 @@ Todas as mudanças relevantes deste projeto são documentadas aqui. O formato se
 - `CoffeeMail.with_request_id` para propagar `x-request-id`.
 - Assinaturas RBS em `sig/`, verificadas pelo Steep em modo estrito.
 - Especificação em `specs/SPEC.md`, com rastreabilidade entre requisitos e testes verificada no CI.
+
+### Corrigido
+
+- `domains.get_warmup_status` com resposta JSON `null` devolve `data == nil` com sucesso, em vez de `InvalidResponseError` (RB-OPS-78).

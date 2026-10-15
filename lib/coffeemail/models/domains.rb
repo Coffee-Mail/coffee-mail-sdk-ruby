@@ -22,11 +22,20 @@ module CoffeeMail
     # Resultado de `domains.list` (sem paginação).
     DomainList = Internal::Model.define(domains: [DomainSummary])
 
+    # Rotação de DKIM pendente (`domains.rotate_dkim` e `DomainDetail#dkim_rotation`).
+    DkimRotation = Internal::Model.define(domain_id: :string, selector: :string, started_at: :time,
+                                          record: DnsRecord)
+
+    # Host próprio apontado por CNAME para a plataforma (return-path e domínio de rastreamento).
+    CustomHostStatus = Internal::Model.define(host: :string, target: :string, verified: :boolean,
+                                              verified_at: :time, record: DnsRecord)
+
     # Detalhe de um domínio.
     DomainDetail = Internal::Model.define(
       id: :string, name: :string, status: :string, status_reason: :string, sending_identity: SendingIdentity,
       dkim_selector: :string, dkim_public_key: :string, verified_at: :time, last_check_at: :time,
-      created_at: :time, dns_records_to_publish: [DnsRecord]
+      created_at: :time, dns_records_to_publish: [DnsRecord], dkim_rotation: DkimRotation,
+      return_path: CustomHostStatus, tracking_domain: CustomHostStatus, tracking_domains_available: :boolean
     )
 
     # Checagem DNS de `domains.verify`.
@@ -53,7 +62,8 @@ module CoffeeMail
     # Resultado de `domains.get_warmup_status`.
     DomainWarmup = Internal::Model.define(
       domain_id: :string, current_day: :integer, daily_quota: :integer, sent_today: :integer,
-      remaining_today: :integer, quota_used_percent: :integer, last_send_date: :string
+      remaining_today: :integer, quota_used_percent: :integer, last_send_date: :string, status: :string,
+      total_days: :integer, started_at: :time, completed_at: :time
     )
 
     # Resultado de `domains.delete`.

@@ -16,6 +16,8 @@ module CoffeeMail
         DOMAIN_VERIFY = "/domains/%s/verify"
         DOMAIN_HEALTH = "/domains/%s/health"
         DOMAIN_WARMUP = "/domains/%s/warmup"
+        DOMAIN_DKIM_ROTATE = "/domains/%s/dkim/rotate"
+        DOMAIN_TRACKING = "/domains/%s/tracking-domain"
         TEMPLATES = "/templates"
         TEMPLATE = "/templates/%s"
         TEMPLATES_PREVIEW = "/templates/preview"

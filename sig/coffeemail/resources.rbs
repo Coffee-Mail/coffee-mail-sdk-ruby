@@ -15,6 +15,7 @@ module CoffeeMail
       def body: (Hash[Symbol, untyped] values, Internal::Fields::table table) -> Hash[String, untyped]
       def query: (Hash[Symbol, untyped] values, Internal::Fields::table table) -> Hash[String, String]
       def object: [T] (Internal::_Model[T] model) -> Internal::decoder[T]
+      def optional: [T] (Internal::_Model[T] model) -> Internal::decoder[T?]
       def list_of: [T] (Internal::_Model[T] model, ?String? key) -> Internal::decoder[Array[T]]
       def raw: () -> Internal::decoder[untyped]
     end
@@ -52,7 +53,10 @@ module CoffeeMail
       def verify: (String id) -> Response[Models::DomainVerification]
       def delete: (String id) -> Response[Models::DeletedDomain]
       def get_health: (String id) -> Response[Models::DomainHealth]
-      def get_warmup_status: (String id) -> Response[Models::DomainWarmup]
+      def get_warmup_status: (String id) -> Response[Models::DomainWarmup?]
+      def rotate_dkim: (String id) -> Response[Models::DkimRotation]
+      def set_tracking_domain: (String id, host: String) -> Response[Models::CustomHostStatus]
+      def remove_tracking_domain: (String id) -> Response[Models::CustomHostStatus?]
     end
 
     class Templates < Base

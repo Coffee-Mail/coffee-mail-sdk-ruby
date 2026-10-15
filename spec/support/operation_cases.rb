@@ -12,6 +12,11 @@ module OperationCases
   DOMAIN = { "id" => "d1", "name" => "x.com", "status" => "verified", "createdAt" => T0,
              "sendingIdentity" => { "provider" => "aws_ses", "state" => "ready" },
              "dnsRecordsToPublish" => [{ "type" => "TXT", "host" => "h", "value" => "v" }] }.freeze
+  RECORD = { "type" => "TXT", "host" => "cm2._domainkey.x.com", "value" => "v=DKIM1; p=abc", "ttl" => 3600 }.freeze
+  DKIM_ROTATION = { "domainId" => UUID, "selector" => "cm2", "startedAt" => T0, "record" => RECORD }.freeze
+  TRACKING = { "host" => "links.x.com", "target" => "track.coffeemail.com.br", "verified" => false,
+               "verifiedAt" => nil,
+               "record" => { "type" => "CNAME", "host" => "links.x.com", "value" => "track.coffeemail.com.br" } }.freeze
   TEMPLATE = { "id" => "t1", "name" => "Boas-vindas", "alias" => "welcome", "html" => "<p>{{nome}}</p>",
                "format" => "html", "variables" => [{ "name" => "nome" }], "isActive" => true }.freeze
   AUDIENCE = { "id" => "a1", "name" => "Clientes", "active" => true, "contactsCount" => 2 }.freeze
@@ -99,6 +104,20 @@ module OperationCases
       call: ->(client) { client.domains.get_health("d1") }, expect_data: ->(data) { data.spf.ok }),
     c(id: "RB-OPS-15", title: "domains.get_warmup_status vazio vira nil", verb: "GET", path: "/domains/d1/warmup",
       reply: [200, ""], call: ->(client) { client.domains.get_warmup_status("d1") }, expect_data: lambda(&:nil?)),
+    c(id: "RB-OPS-74", title: "domains.rotate_dkim", verb: "POST", path: "/domains/d1/dkim/rotate",
+      reply: [200, DKIM_ROTATION], call: ->(client) { client.domains.rotate_dkim("d1") },
+      expect_data: lambda { |data|
+        data.selector == "cm2" && data.started_at.is_a?(Time) && data.record.type == CoffeeMail::DnsRecordType::TXT
+      }),
+    c(id: "RB-OPS-75", title: "domains.set_tracking_domain", verb: "PUT", path: "/domains/d1/tracking-domain",
+      reply: [200, TRACKING], call: ->(client) { client.domains.set_tracking_domain("d1", host: "links.x.com") },
+      body: { "host" => "links.x.com" },
+      expect_data: lambda { |data|
+        data.verified == false && data.verified_at.nil? && data.record.type == CoffeeMail::DnsRecordType::CNAME
+      }),
+    c(id: "RB-OPS-76", title: "domains.remove_tracking_domain", verb: "DELETE", path: "/domains/d1/tracking-domain",
+      reply: [200, TRACKING], call: ->(client) { client.domains.remove_tracking_domain("d1") },
+      expect_data: ->(data) { data.host == "links.x.com" }),
     c(id: "RB-OPS-16", title: "templates.create", verb: "POST", path: "/templates", reply: [201, TEMPLATE],
       call: lambda { |client|
         client.templates.create(name: "Boas-vindas", html: "<p>{{nome}}</p>", alias: "welcome", format: "html",

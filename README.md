@@ -44,7 +44,7 @@
 - **Seguro entre threads**: crie um `Client` por aplicação e compartilhe.
 - **Retry e paginação automáticos opcionais**: novas tentativas desligadas por padrão (`RetryPolicy`) e `pages` preguiçoso para listas paginadas.
 - **Tipado**: assinaturas RBS em `sig/`, verificadas pelo Steep em modo estrito.
-- **Validado contra o contrato da API**: as 61 operações geram requisições validadas contra o OpenAPI de produto (`openapi/product.json`).
+- **Validado contra o contrato da API**: as 64 operações geram requisições validadas contra o OpenAPI de produto (`openapi/product.json`).
 - **Webhooks verificados com o algoritmo da API**: `CoffeeMail::Webhook` passa nos vetores de teste gerados pelo assinador real.
 
 ## 🚦 Status do projeto
@@ -52,7 +52,7 @@
 | Item | Estado |
 | --- | --- |
 | Versão | `0.1.0` (ainda não publicada) |
-| Cobertura da API de produto | 61 operações (todas as do `product.json`, exceto `GET /v1/product/auth/csrf`, exclusiva do dashboard) |
+| Cobertura da API de produto | 64 operações (todas as do `product.json`, exceto `GET /v1/product/auth/csrf`, exclusiva do dashboard) |
 | Idiomas das mensagens de erro | `pt-BR` (padrão) e `en` |
 | Especificação | [`specs/SPEC.md`](specs/SPEC.md), com cada requisito coberto por teste |
 
@@ -201,7 +201,19 @@ Todos os métodos devolvem `CoffeeMail::Response`. Path params são posicionais,
 
 ### Domínios — `client.domains`
 
-`create(name:)` · `list` · `get(id)` · `verify(id)` · `delete(id)` · `get_health(id)` · `get_warmup_status(id)` (`data` é `nil` fora do aquecimento).
+`create(name:)` · `list` · `get(id)` · `verify(id)` · `delete(id)` · `get_health(id)` · `get_warmup_status(id)` (`data` é `nil` fora do aquecimento) · `rotate_dkim(id)` · `set_tracking_domain(id, host:)` · `remove_tracking_domain(id)` (`data` é `nil` quando não havia domínio de rastreamento).
+
+`get(id)` traz `dkim_rotation` (rotação de DKIM pendente), `return_path` e `tracking_domain` (host próprio com o CNAME a publicar e o status da verificação) e `tracking_domains_available`. O aquecimento expõe `status` (`CoffeeMail::DomainWarmupStatus`), `total_days`, `started_at` e `completed_at`.
+
+```ruby
+rotation = client.domains.rotate_dkim(domain_id).unwrap!
+rotation.record.host  # publique este TXT; a chave só muda quando ele for encontrado no DNS
+
+tracking, error = client.domains.set_tracking_domain(domain_id, host: "links.exemplo.com.br")
+tracking.record.value unless error  # alvo do CNAME
+```
+
+`rotate_dkim` é idempotente e devolve `ConflictError` (`api_code == "DOMAIN_NOT_VERIFIED"`) para domínio não verificado. `set_tracking_domain` devolve `ValidationError` (`INVALID_TRACKING_HOST`) para host inválido e `ConflictError` (`TRACKING_DOMAINS_DISABLED`) quando o recurso não está disponível.
 
 ### Templates — `client.templates`
 
@@ -278,7 +290,7 @@ bundle exec bundler-audit check --update
 
 - O desenvolvimento é guiado por especificação: todo requisito de [`specs/SPEC.md`](specs/SPEC.md) tem teste, e o nome de cada teste começa pelo ID do requisito.
 - Os testes usam um transporte falso injetado por `transport:`; nenhum teste acessa a API.
-- `spec/conformance` valida as requisições das 61 operações contra `openapi/product.json` e falha se alguma operação do spec ficar sem método.
+- `spec/conformance` valida as requisições das 64 operações contra `openapi/product.json` e falha se alguma operação do spec ficar sem método.
 - `spec/webhook_spec.rb` roda os vetores compartilhados de `spec/fixtures/webhook_vectors.json`, gerados pelo assinador da API.
 
 Para atualizar o snapshot do spec:

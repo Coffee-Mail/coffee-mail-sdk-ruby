@@ -68,6 +68,8 @@ module CoffeeMail
         DOMAIN_VERIFY: String
         DOMAIN_HEALTH: String
         DOMAIN_WARMUP: String
+        DOMAIN_DKIM_ROTATE: String
+        DOMAIN_TRACKING: String
         TEMPLATES: String
         TEMPLATE: String
         TEMPLATES_PREVIEW: String
@@ -137,6 +139,7 @@ module CoffeeMail
       def self?.masked_inspect: (untyped instance, Array[Symbol] masked) -> String
       def self?.masked: (untyped value) -> String
       def self?.object: [T] (_Model[T] model) -> decoder[T]
+      def self?.optional: [T] (_Model[T] model) -> decoder[T?]
       def self?.list: [T] (_Model[T] model, ?String? key) -> decoder[Array[T]]
     end
 
@@ -190,6 +193,7 @@ module CoffeeMail
       LIST_DELIVERIES: table
       STATS: table
       DOMAIN: table
+      TRACKING_DOMAIN: table
     end
 
     class Operation < Data

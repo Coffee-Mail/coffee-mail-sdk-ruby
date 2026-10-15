@@ -20,6 +20,12 @@ module CoffeeMail::BroadcastStatus
   ALL: Array[String]
 end
 
+module CoffeeMail::DnsRecordType
+  TXT: String
+  CNAME: String
+  ALL: Array[String]
+end
+
 module CoffeeMail::DnsResolution
   FOUND: String
   ABSENT: String
@@ -45,6 +51,12 @@ module CoffeeMail::DomainStatusReason
   DNS_RECORDS_MISSING: String
   PROVIDER_PENDING: String
   PROVIDER_FAILED: String
+  ALL: Array[String]
+end
+
+module CoffeeMail::DomainWarmupStatus
+  WARMING: String
+  COMPLETED: String
   ALL: Array[String]
 end
 
@@ -306,11 +318,32 @@ class CoffeeMail::Models::CreatedDomain < Data
   def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::CreatedDomain
 end
 
+class CoffeeMail::Models::CustomHostStatus < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader host: String?
+  attr_reader target: String?
+  attr_reader verified: bool?
+  attr_reader verified_at: Time?
+  attr_reader record: CoffeeMail::Models::DnsRecord?
+  def self.new: (?host: String?, ?target: String?, ?verified: bool?, ?verified_at: Time?, ?record: CoffeeMail::Models::DnsRecord?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::CustomHostStatus
+end
+
 class CoffeeMail::Models::DeletedDomain < Data
   FIELDS: Hash[Symbol, untyped]
   attr_reader ok: bool?
   def self.new: (?ok: bool?) -> instance
   def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::DeletedDomain
+end
+
+class CoffeeMail::Models::DkimRotation < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader domain_id: String?
+  attr_reader selector: String?
+  attr_reader started_at: Time?
+  attr_reader record: CoffeeMail::Models::DnsRecord?
+  def self.new: (?domain_id: String?, ?selector: String?, ?started_at: Time?, ?record: CoffeeMail::Models::DnsRecord?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::DkimRotation
 end
 
 class CoffeeMail::Models::DnsCheck < Data
@@ -359,7 +392,11 @@ class CoffeeMail::Models::DomainDetail < Data
   attr_reader last_check_at: Time?
   attr_reader created_at: Time?
   attr_reader dns_records_to_publish: Array[CoffeeMail::Models::DnsRecord]?
-  def self.new: (?id: String?, ?name: String?, ?status: String?, ?status_reason: String?, ?sending_identity: CoffeeMail::Models::SendingIdentity?, ?dkim_selector: String?, ?dkim_public_key: String?, ?verified_at: Time?, ?last_check_at: Time?, ?created_at: Time?, ?dns_records_to_publish: Array[CoffeeMail::Models::DnsRecord]?) -> instance
+  attr_reader dkim_rotation: CoffeeMail::Models::DkimRotation?
+  attr_reader return_path: CoffeeMail::Models::CustomHostStatus?
+  attr_reader tracking_domain: CoffeeMail::Models::CustomHostStatus?
+  attr_reader tracking_domains_available: bool?
+  def self.new: (?id: String?, ?name: String?, ?status: String?, ?status_reason: String?, ?sending_identity: CoffeeMail::Models::SendingIdentity?, ?dkim_selector: String?, ?dkim_public_key: String?, ?verified_at: Time?, ?last_check_at: Time?, ?created_at: Time?, ?dns_records_to_publish: Array[CoffeeMail::Models::DnsRecord]?, ?dkim_rotation: CoffeeMail::Models::DkimRotation?, ?return_path: CoffeeMail::Models::CustomHostStatus?, ?tracking_domain: CoffeeMail::Models::CustomHostStatus?, ?tracking_domains_available: bool?) -> instance
   def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::DomainDetail
 end
 
@@ -421,7 +458,11 @@ class CoffeeMail::Models::DomainWarmup < Data
   attr_reader remaining_today: Integer?
   attr_reader quota_used_percent: Integer?
   attr_reader last_send_date: String?
-  def self.new: (?domain_id: String?, ?current_day: Integer?, ?daily_quota: Integer?, ?sent_today: Integer?, ?remaining_today: Integer?, ?quota_used_percent: Integer?, ?last_send_date: String?) -> instance
+  attr_reader status: String?
+  attr_reader total_days: Integer?
+  attr_reader started_at: Time?
+  attr_reader completed_at: Time?
+  def self.new: (?domain_id: String?, ?current_day: Integer?, ?daily_quota: Integer?, ?sent_today: Integer?, ?remaining_today: Integer?, ?quota_used_percent: Integer?, ?last_send_date: String?, ?status: String?, ?total_days: Integer?, ?started_at: Time?, ?completed_at: Time?) -> instance
   def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::DomainWarmup
 end
 

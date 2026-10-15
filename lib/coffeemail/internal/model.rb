@@ -86,6 +86,10 @@ module CoffeeMail
         ->(value) { model.from_wire(value) }
       end
 
+      def optional(model)
+        ->(value) { value.nil? ? nil : model.from_wire(value) }
+      end
+
       def list(model, key = nil)
         ->(value) { (key.nil? ? value : value.fetch(key)).map { |entry| model.from_wire(entry) } }
       end

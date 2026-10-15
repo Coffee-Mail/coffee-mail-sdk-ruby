@@ -60,6 +60,120 @@ RSpec.describe "Operações do contrato" do
     end
   end
 
+  describe "Fase 4 do contrato: entregabilidade" do
+    def api_error(status, code)
+      FakeTransport.json(status, { "error" => { "code" => code, "message" => code } })
+    end
+
+    def time(value) = Time.iso8601(value)
+
+    it "RB-OPS-74 rotate_dkim é idempotente e não envia corpo" do
+      transport = FakeTransport.new(FakeTransport.reply(200, OperationCases::DKIM_ROTATION),
+                                    FakeTransport.reply(200, OperationCases::DKIM_ROTATION))
+      client = client_with(transport)
+      first = client.domains.rotate_dkim("d1").data
+      second = client.domains.rotate_dkim("d1").data
+
+      expect(second).to eq(first)
+      expect(first.domain_id).to eq(OperationCases::UUID)
+      expect(first.record.ttl).to eq(3600)
+      expect(transport.requests.map(&:body)).to eq([nil, nil])
+    end
+
+    it "RB-OPS-74 rotate_dkim mapeia 404 e 409 para erros tipados com api_code" do
+      missing = client_with(api_error(404, "DOMAIN_NOT_FOUND")).domains.rotate_dkim("x").error
+      pending = client_with(api_error(409, "DOMAIN_NOT_VERIFIED")).domains.rotate_dkim("d1").error
+
+      expect([missing.class, missing.api_code]).to eq([CoffeeMail::NotFoundError, "DOMAIN_NOT_FOUND"])
+      expect([pending.class, pending.api_code]).to eq([CoffeeMail::ConflictError, "DOMAIN_NOT_VERIFIED"])
+    end
+
+    it "RB-OPS-75 set_tracking_domain mapeia 400, 409 e 404 para erros tipados" do
+      invalid = client_with(api_error(400, "INVALID_TRACKING_HOST")).domains.set_tracking_domain("d1", host: "x")
+      disabled = client_with(api_error(409, "TRACKING_DOMAINS_DISABLED"))
+                 .domains.set_tracking_domain("d1", host: "links.x.com")
+      missing = client_with(api_error(404, "DOMAIN_NOT_FOUND")).domains.set_tracking_domain("x", host: "links.x.com")
+
+      expect([invalid.error.class, invalid.error.api_code])
+        .to eq([CoffeeMail::ValidationError, "INVALID_TRACKING_HOST"])
+      expect([disabled.error.class, disabled.error.api_code])
+        .to eq([CoffeeMail::ConflictError, "TRACKING_DOMAINS_DISABLED"])
+      expect(missing.error).to be_a(CoffeeMail::NotFoundError)
+    end
+
+    it "RB-OPS-75 set_tracking_domain verificado traz verified_at como Time" do
+      reply = OperationCases::TRACKING.merge("verified" => true, "verifiedAt" => OperationCases::T0)
+      data = client_with(FakeTransport.json(200, reply)).domains.set_tracking_domain("d1", host: "links.x.com").data
+
+      expect([data.verified, data.verified_at]).to eq([true, time(OperationCases::T0)])
+    end
+
+    it "RB-OPS-76 remove_tracking_domain sem domínio configurado devolve nil" do
+      empty = client_with(FakeTransport.json(200, "")).domains.remove_tracking_domain("d1")
+      null = client_with(FakeTransport.json(200, nil)).domains.remove_tracking_domain("d1")
+      missing = client_with(api_error(404, "DOMAIN_NOT_FOUND")).domains.remove_tracking_domain("x")
+
+      expect([empty, null]).to all(be_success)
+      expect([empty.data, null.data]).to eq([nil, nil])
+      expect(missing.error).to be_a(CoffeeMail::NotFoundError)
+    end
+
+    it "RB-OPS-77 domains.get expõe rotação de DKIM, return-path e domínio de rastreamento" do
+      reply = OperationCases::DOMAIN.merge("dkimRotation" => OperationCases::DKIM_ROTATION,
+                                           "returnPath" => OperationCases::TRACKING.merge("host" => "bounce.x.com"),
+                                           "trackingDomain" => OperationCases::TRACKING,
+                                           "trackingDomainsAvailable" => true)
+      data = client_with(FakeTransport.json(200, reply)).domains.get("d1").data
+
+      expect(data.dkim_rotation.selector).to eq("cm2")
+      expect(data.return_path.host).to eq("bounce.x.com")
+      expect(data.tracking_domain.target).to eq("track.coffeemail.com.br")
+      expect(data.tracking_domains_available).to be(true)
+    end
+
+    it "RB-OPS-77 campos novos nulos ou ausentes viram nil" do
+      reply = OperationCases::DOMAIN.merge("dkimRotation" => nil, "returnPath" => nil, "trackingDomain" => nil)
+      data = client_with(FakeTransport.json(200, reply)).domains.get("d1").data
+      members = data.to_h.slice(:dkim_rotation, :return_path, :tracking_domain, :tracking_domains_available)
+
+      expect(members.values).to eq([nil, nil, nil, nil])
+      expect(CoffeeMail::Models::DomainDetail.members.last(4))
+        .to eq(%i[dkim_rotation return_path tracking_domain tracking_domains_available])
+    end
+
+    it "RB-OPS-78 get_warmup_status expõe status, total_days, started_at e completed_at" do
+      warming = { "domainId" => OperationCases::UUID, "status" => "warming", "currentDay" => 3, "dailyQuota" => 200,
+                  "sentToday" => 50, "remainingToday" => 150, "quotaUsedPercent" => 25, "lastSendDate" => nil,
+                  "totalDays" => 30, "startedAt" => OperationCases::T0, "completedAt" => nil }
+      completed = warming.merge("status" => "completed", "completedAt" => "2026-11-13T10:00:00.000Z")
+      transport = FakeTransport.new(FakeTransport.reply(200, warming), FakeTransport.reply(200, completed))
+      client = client_with(transport)
+      first = client.domains.get_warmup_status("d1").data
+      last = client.domains.get_warmup_status("d1").data
+
+      expect([first.status, first.total_days, first.started_at, first.completed_at])
+        .to eq([CoffeeMail::DomainWarmupStatus::WARMING, 30, time(OperationCases::T0), nil])
+      expect([last.status, last.completed_at])
+        .to eq([CoffeeMail::DomainWarmupStatus::COMPLETED, time("2026-11-13T10:00:00.000Z")])
+    end
+
+    it "RB-OPS-78 get_warmup_status com JSON null vira nil com sucesso" do
+      response = client_with(FakeTransport.json(200, nil)).domains.get_warmup_status("d1")
+
+      expect(response).to be_success
+      expect(response.data).to be_nil
+    end
+
+    it "RB-OPS-79 enums de aquecimento e de tipo de registro são abertos" do
+      expect(CoffeeMail::DomainWarmupStatus::ALL).to eq(%w[warming completed])
+      expect(CoffeeMail::DnsRecordType::ALL).to eq(%w[TXT CNAME])
+      reply = OperationCases::DKIM_ROTATION.merge("record" => OperationCases::RECORD.merge("type" => "MX"))
+      unknown = client_with(FakeTransport.json(200, reply)).domains.rotate_dkim("d1").data
+
+      expect(unknown.record.type).to eq("MX")
+    end
+  end
+
   describe "templates.preview_by_id" do
     it "RB-OPS-22 busca o template e renderiza o HTML dele" do
       transport = FakeTransport.new(FakeTransport.reply(200, OperationCases::TEMPLATE),
