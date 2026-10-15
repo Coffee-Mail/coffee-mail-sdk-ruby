@@ -110,7 +110,8 @@ RSpec.describe "Gates de qualidade e release" do
   end
 
   it "RB-RLS-05 toda a API pública tem documentação YARD" do
-    output, status = Open3.capture2e("bundle", "exec", "yard", "stats", "--list-undoc", chdir: root_dir)
+    output, status = Open3.capture2e(RbConfig.ruby, Gem.bin_path("yard", "yard"), "stats", "--list-undoc",
+                                     chdir: root_dir)
 
     expect(status).to be_success, output
     expect(output).to include("100.00% documented")
