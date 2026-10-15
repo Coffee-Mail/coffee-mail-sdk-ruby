@@ -1,0 +1,400 @@
+class ::Data
+  def initialize: (*untyped, **untyped) -> void
+end
+
+module CoffeeMail
+  module Internal
+    type decoder[T] = ^(untyped) -> T
+
+    interface _Model[T]
+      def from_wire: (untyped hash) -> T
+    end
+
+    module Constants
+      module Defaults
+        BASE_URL: String
+        API_PREFIX: String
+        API_KEY_ENV: String
+        TIMEOUT_SECONDS: Integer
+        MILLISECONDS_PER_SECOND: Integer
+        INTROSPECTION_TTL_SECONDS: Integer
+        NETWORK_STATUS: Integer
+        NO_CONTENT_STATUS: Integer
+        SUCCESS_STATUSES: Range[Integer]
+        MASK: String
+        KEY_PREFIX_PATTERN: Regexp
+        FULL_ACCESS_PERMISSION: String
+        PLAN_QUOTA_EXCEEDED: String
+        FORBIDDEN_STATUS: Integer
+        RATE_LIMIT_STATUS: Integer
+        SERVER_ERROR_STATUSES: Range[Integer]
+        RETRY_AFTER_PATTERN: Regexp
+      end
+
+      module Headers
+        AUTHORIZATION: String
+        ACCEPT: String
+        CONTENT_TYPE: String
+        ACCEPT_LANGUAGE: String
+        USER_AGENT: String
+        IDEMPOTENCY_KEY: String
+        SANDBOX: String
+        REQUEST_ID: String
+        RETRY_AFTER: String
+        JSON_MEDIA_TYPE: String
+        BEARER_PREFIX: String
+        SANDBOX_ENABLED: String
+        USER_AGENT_VALUE: String
+      end
+
+      module Verbs
+        GET: String
+        POST: String
+        PUT: String
+        PATCH: String
+        DELETE: String
+      end
+
+      module Routes
+        EMAILS: String
+        EMAILS_BATCH: String
+        EMAILS_TAGS: String
+        EMAIL: String
+        EMAIL_EVENTS: String
+        EMAIL_CANCEL: String
+        EMAIL_RESEND: String
+        DOMAINS: String
+        DOMAIN: String
+        DOMAIN_VERIFY: String
+        DOMAIN_HEALTH: String
+        DOMAIN_WARMUP: String
+        TEMPLATES: String
+        TEMPLATE: String
+        TEMPLATES_PREVIEW: String
+        TEMPLATES_FORMAT: String
+        TEMPLATES_TEST_RENDER: String
+        TEMPLATE_TEST_SEND: String
+        AUDIENCES: String
+        AUDIENCE: String
+        CONTACTS: String
+        CONTACTS_BULK: String
+        CONTACT: String
+        BROADCASTS: String
+        BROADCAST: String
+        BROADCAST_SEND: String
+        BROADCAST_TEST_SEND: String
+        BROADCAST_CANCEL: String
+        SENDERS: String
+        SENDERS_VERIFY: String
+        SENDER: String
+        SUPPRESSIONS: String
+        SUPPRESSIONS_BULK: String
+        SUPPRESSION: String
+        SUPPRESSION_REACTIVATE: String
+        WEBHOOKS: String
+        WEBHOOK: String
+        WEBHOOK_ROTATE_SECRET: String
+        WEBHOOK_DELIVERIES: String
+        WEBHOOK_TEST: String
+        STATS: String
+        API_KEY_INTROSPECTION: String
+      end
+    end
+
+    module I18n
+      PT_BR: Hash[Symbol, String]
+      EN: Hash[Symbol, String]
+      CATALOG: Hash[String, Hash[Symbol, String]]
+
+      def self?.message: (String locale, Symbol key, ?Hash[Symbol, untyped] params) -> String
+    end
+
+    module Enum
+      def self?.define: (Module owner, Array[String] values) -> Module
+      def self?.constant_name: (String value) -> String
+    end
+
+    module OptionalMembers : Data
+      def initialize: (**untyped attributes) -> void
+    end
+
+    module Model
+      type kind = untyped
+
+      SCALAR_READERS: Hash[Symbol, untyped]
+      MASKED_SUFFIX: String
+      MASK_VISIBLE_CHARS: Integer
+      RAW: ^(untyped) -> untyped
+
+      def self?.define: (?masked: Array[Symbol], **kind fields) ?{ (untyped) [self: untyped] -> void } -> untyped
+      def self?.install_defaults: (untyped klass, Hash[Symbol, kind] fields) -> void
+      def self?.install_from_wire: (untyped klass, Hash[Symbol, kind] fields) -> void
+      def self?.reader: (String key, kind kind) -> ^(Hash[String, untyped]) -> untyped
+      def self?.converter: (kind kind) -> ^(untyped) -> untyped
+      def self?.wire_key: (Symbol member) -> String
+      def self?.mask: (untyped klass, Array[Symbol] masked) -> void
+      def self?.masked_inspect: (untyped instance, Array[Symbol] masked) -> String
+      def self?.masked: (untyped value) -> String
+      def self?.object: [T] (_Model[T] model) -> decoder[T]
+      def self?.list: [T] (_Model[T] model, ?String? key) -> decoder[Array[T]]
+    end
+
+    module Wire
+      INVALID: Object
+      DECODE_FAILURES: Array[singleton(StandardError)]
+
+      def self?.dump: (untyped value) -> String
+      def self?.decode: (String body, decoder[untyped] decoder) -> untyped
+      def self?.parse_object: (String? body) -> Hash[String, untyped]?
+    end
+
+    module Encoder
+      TIME_PRECISION: Integer
+      ADDRESS: Hash[Symbol, String]
+
+      def self?.body: (Hash[Symbol | String, untyped] values, Fields::table table) -> Hash[String, untyped]
+      def self?.query: (Hash[Symbol, untyped] values, Fields::table table) -> Hash[String, String]
+      def self?.convert: (untyped value, untyped kind) -> untyped
+      def self?.list: (Array[untyped] value, Fields::table table) -> Array[untyped]
+      def self?.address: (untyped value) -> Hash[String, untyped]
+      def self?.plain: (untyped value) -> untyped
+      def self?.scalar: (untyped value) -> String
+    end
+
+    module Fields
+      type table = Hash[Symbol, untyped]
+
+      ATTACHMENT: table
+      TAG: table
+      SEND_EMAIL: table
+      LIST_EMAILS: table
+      TEMPLATE: table
+      TEMPLATE_RENDER: table
+      TEMPLATE_TEST_SEND: table
+      OFFSET_PAGE: table
+      AUDIENCE: table
+      CONTACT: table
+      CONTACTS_BULK: table
+      BROADCAST: table
+      LIST_BROADCASTS: table
+      BROADCAST_TEST_SEND: table
+      SENDER: table
+      SENDER_VERIFY: table
+      SUPPRESSION: table
+      SUPPRESSIONS_BULK: table
+      LIST_SUPPRESSIONS: table
+      WEBHOOK: table
+      WEBHOOK_TOGGLE: table
+      LIST_WEBHOOKS: table
+      LIST_DELIVERIES: table
+      STATS: table
+      DOMAIN: table
+    end
+
+    class Operation < Data
+      attr_reader name: String
+      attr_reader http_method: String
+      attr_reader path: String
+      attr_reader query: Hash[String, String]
+      attr_reader body: untyped
+      attr_reader headers: Hash[String, String]
+      attr_reader decoder: decoder[untyped]
+      attr_reader full_access: bool
+      attr_reader idempotent_post: bool
+      attr_reader empty: untyped
+
+      def self.new: (name: String, http_method: String, path: String, query: Hash[String, String], body: untyped,
+                     headers: Hash[String, String], decoder: decoder[untyped], full_access: bool,
+                     idempotent_post: bool, empty: untyped) -> instance
+      def self.build: (name: String, http_method: String, path: String, decoder: decoder[untyped],
+                       ?query: Hash[String, String], ?body: untyped, ?headers: Hash[String, String],
+                       ?full_access: bool, ?idempotent_post: bool, ?empty: untyped) -> Operation
+      def self.path: (String template, *String params) -> String
+    end
+
+    module ErrorMapper
+      ERROR_CLASSES: Hash[Integer, singleton(Error)]
+      CANONICAL_CODES: Hash[Integer, String]
+      FALLBACK_MESSAGES: Hash[Integer, Symbol]
+      OPERATION_DETAIL: String
+      PERMISSION_DETAIL: String
+
+      class Attributes < Data
+        attr_reader message: String
+        attr_reader status: Integer
+        attr_reader code: String
+        attr_reader api_code: String?
+        attr_reader details: Hash[String, untyped]
+        attr_reader request_id: String?
+
+        def self.new: (message: String, status: Integer, code: String, api_code: String?,
+                       details: Hash[String, untyped], request_id: String?) -> instance
+      end
+
+      def self?.build: (HttpResponse response, Operation operation, String locale) -> Error
+      def self?.invalid_response: (HttpResponse response, String locale) -> InvalidResponseError
+      def self?.attributes: (HttpResponse response, String locale) -> Attributes
+      def self?.rate_limit_error: (Attributes attributes, HttpResponse response) -> RateLimitError
+      def self?.error_body: (Hash[String, untyped]? envelope) -> Hash[String, untyped]
+      def self?.message: (HttpResponse response, Hash[String, untyped]? envelope, Hash[String, untyped] body,
+                          String locale) -> String
+      def self?.details: (Hash[String, untyped] body) -> Hash[String, untyped]
+      def self?.retry_after: (HttpResponse response) -> Integer?
+      def self?.permission_remap?: (HttpResponse response, Operation operation) -> bool
+      def self?.permission_error: (Attributes attributes, Operation operation, String locale) -> PermissionError
+    end
+
+    class NetHttpTransport
+      REQUEST_CLASSES: Hash[String, singleton(Net::HTTPRequest)]
+
+      def call: (HttpRequest request) -> HttpResponse
+
+      private
+
+      def build: (HttpRequest request, URI::Generic uri) -> Net::HTTPRequest
+      def connection_options: (URI::Generic uri, number timeout) -> Hash[Symbol, untyped]
+      def to_response: (Net::HTTPResponse net_response) -> HttpResponse
+    end
+
+    module TransportGuard
+      def self?.call: (_Transport transport, HttpRequest request, String locale) -> (HttpResponse | NetworkError)
+      def self?.timeout_error: (Exception original, HttpRequest request, String locale) -> NetworkError
+      def self?.network_error: (Exception original, String locale) -> NetworkError
+    end
+
+    module Backoff
+      GROWTH_FACTOR: Integer
+
+      def self?.delay: (RetryPolicy policy, Integer attempt, Integer? retry_after, Random random) -> Float
+    end
+
+    interface _EnvSource
+      def fetch: (String key, String default) -> String
+    end
+
+    class Options < Data
+      attr_reader api_key: String
+      attr_reader locale: String
+      attr_reader timeout: number
+      attr_reader retry_policy: RetryPolicy?
+      attr_reader transport: _Transport
+
+      def self.new: (api_key: String, locale: String, timeout: number, retry_policy: RetryPolicy?,
+                     transport: _Transport) -> instance
+      def self.build: (api_key: String?, locale: String, timeout: untyped, retry_policy: untyped,
+                       transport: untyped, ?env: _EnvSource) -> Options
+      def self.resolve_key: (String? api_key, _EnvSource env) -> String
+      def self.missing_key: (String locale) -> MissingApiKeyError
+      def self.validate_locale!: (String locale) -> void
+      def self.validate!: (String locale, Symbol key, bool valid) -> void
+      def masked_key: () -> String
+      def retry_enabled?: () -> bool
+      def inspect: () -> String
+      def to_s: () -> String
+    end
+
+    class Requester
+      RETRYABLE_METHODS: Array[String]
+      POST: String
+      FIRST_ATTEMPT: Integer
+
+      interface _Sleeper
+        def call: (Float seconds) -> untyped
+      end
+
+      @sleeper: _Sleeper
+      @random: Random
+
+      attr_reader options: Options
+
+      def initialize: (Options options, ?sleeper: _Sleeper, ?random: Random) -> void
+      def call: (Operation operation) -> Response[untyped]
+
+      private
+
+      def perform: (HttpRequest request, Operation operation, Integer attempt) -> Response[untyped]
+      def attempt: (HttpRequest request, Operation operation) -> Response[untyped]
+      def interpret: (HttpResponse http, Operation operation) -> Response[untyped]
+      def decode: (HttpResponse http, Operation operation) -> Response[untyped]
+      def success?: (HttpResponse http) -> bool
+      def empty_body?: (HttpResponse http) -> bool
+      def retry?: (RetryPolicy policy, HttpRequest request, Error error, Integer attempt) -> bool
+      def retryable_request?: (HttpRequest request) -> bool
+      def retryable_error?: (Error error) -> bool
+      def build_request: (Operation operation) -> HttpRequest
+      def url: (Operation operation) -> String
+      def headers: (Operation operation, String? body) -> Hash[String, String]
+      def generated_idempotency: (Operation operation) -> Hash[String, String]
+      def request_id: () -> Hash[String, String]
+    end
+
+    class IntrospectionCache
+      class Entry < Data
+        attr_reader response: Response[Models::ApiKeyInfo]
+        attr_reader stored_at: Float
+
+        def self.new: (response: Response[Models::ApiKeyInfo], stored_at: Float) -> instance
+      end
+
+      @requester: Requester
+      @clock: ^() -> Float
+      @mutex: Thread::Mutex
+      @entry: Entry?
+
+      def initialize: (Requester requester, ?clock: ^() -> Float) -> void
+      def fetch: (force_refresh: bool) -> Response[Models::ApiKeyInfo]
+      def invalidate: () -> void
+
+      private
+
+      def fresh?: (Entry entry) -> bool
+      def operation: () -> Operation
+    end
+
+    module Paginator
+      START: Object
+      DONE: Object
+
+      class Page < Data
+        attr_reader response: Response[untyped]
+        attr_reader offset: Integer
+
+        def self.new: (response: Response[untyped], offset: Integer) -> instance
+      end
+
+      def self?.cursor: () { (String?) -> Response[untyped] } -> untyped
+      def self?.offset: (Integer start) { (Integer) -> Response[untyped] } -> untyped
+      def self?.next_cursor_page: (untyped previous, ^(String?) -> Response[untyped] fetch) -> untyped
+      def self?.next_offset_page: (untyped previous, Integer start, ^(Integer) -> Response[untyped] fetch) -> untyped
+      def self?.following_offset: (Page previous) -> Integer?
+      def self?.offset_items: (untyped data) -> Array[untyped]
+      def self?.response_of: (untyped page) -> untyped
+    end
+
+    module WebhookVerifier
+      DIGEST: String
+      SIGNATURE_PREFIX: String
+      SEPARATOR: String
+      NUMERIC: Regexp
+      RACK_INPUT: String
+      RACK_PREFIX: String
+      TRUE_VALUE: String
+      LOCAL_STATUS: Integer
+      REASON_MESSAGES: Hash[Symbol, Symbol]
+
+      def self?.failure_reason: (String payload, Webhook::headers headers, String secret, Integer tolerance,
+                                 Webhook::clock? clock) -> Symbol?
+      def self?.construct: (payload: String, headers: Webhook::headers, secret: String, tolerance: Integer,
+                            clock: Webhook::clock?, locale: String) -> Response[Webhook::Event]
+      def self?.event: (Hash[String, untyped] parsed, Webhook::headers headers) -> Webhook::Event
+      def self?.failure: (Symbol reason, String locale) -> Response[untyped]
+      def self?.header_values: (Webhook::headers headers) -> Array[String?]
+      def self?.header: (Webhook::headers headers, String name) -> String?
+      def self?.normalize: (untyped key) -> String
+      def self?.timestamp_valid?: (String timestamp, Integer tolerance, Webhook::clock? clock) -> bool
+      def self?.signature_valid?: (String signature, String timestamp, String idempotency_key, String payload,
+                                   String secret) -> bool
+      def self?.read_body: (Hash[String, untyped] env) -> String
+    end
+  end
+end

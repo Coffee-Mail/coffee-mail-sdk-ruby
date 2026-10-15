@@ -1,0 +1,7 @@
+--markup markdown
+--no-private
+--exclude lib/coffeemail/internal
+lib/**/*.rb
+-
+README.md
+CHANGELOG.md

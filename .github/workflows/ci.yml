@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: check (Ruby ${{ matrix.ruby }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby: ["3.3", "3.4", "ruby"]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+      - name: Versão sincronizada
+        run: bin/check-version-sync
+      - name: Regras da casa
+        run: bundle exec rubocop --only CoffeeMail
+      - name: Lint
+        run: bundle exec rubocop
+      - name: Tipos
+        run: |
+          bin/generate-signatures --check
+          bundle exec rbs -r json -r net-http -r uri -r openssl -r time -r securerandom -r timeout -I sig validate
+          bundle exec steep check
+      - name: Testes com cobertura
+        run: bundle exec rspec
+      - name: Rastreabilidade SDD
+        run: bin/check-spec-coverage
+      - name: Compatibilidade da API pública
+        run: bin/check-api-compat
+      - name: Build e smoke test do pacote
+        run: bin/smoke-test
+
+  vulnerabilities:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ruby
+          bundler-cache: true
+      - run: bundle exec bundler-audit check --update
+
+  public-repository:
+    name: sem referências a repositórios privados
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: |
+          if git grep -nIE 'coffee-mail-(a)pi|coffee-mail-(w)eb'; then
+            echo "::error::Repositório público não pode citar repositórios privados."
+            exit 1
+          fi

@@ -1,0 +1,226 @@
+module CoffeeMail
+  VERSION: String
+  NO_CONTENT: NoContent
+
+  type address = String | Hash[Symbol, untyped]
+  type addresses = address | Array[address]
+  type item = Hash[Symbol, untyped]
+  type json_object = Hash[String | Symbol, untyped]
+  type number = Integer | Float
+
+  REQUEST_ID_STORAGE_KEY: Symbol
+
+  def self.with_request_id: [T] (String request_id) { () -> T } -> T
+  def self.current_request_id: () -> String?
+
+  module Locale
+    PT_BR: String
+    EN: String
+    DEFAULT: String
+    ALL: Array[String]
+  end
+
+  module ErrorCode
+    VALIDATION_ERROR: String
+    UNAUTHORIZED: String
+    PAYMENT_REQUIRED: String
+    FORBIDDEN: String
+    PERMISSION_DENIED: String
+    NOT_FOUND: String
+    CONFLICT: String
+    RATE_LIMIT_EXCEEDED: String
+    INTERNAL_SERVER_ERROR: String
+    API_ERROR: String
+    NETWORK_ERROR: String
+    INVALID_RESPONSE: String
+    MISSING_API_KEY: String
+    WEBHOOK_VERIFICATION_FAILED: String
+  end
+
+  class Error < StandardError
+    attr_reader status: Integer
+    attr_reader code: String
+    attr_reader api_code: String?
+    attr_reader details: Hash[String, untyped]
+    attr_reader request_id: String?
+
+    def initialize: (message: String, status: Integer, code: String, ?api_code: String?,
+                     ?details: Hash[String, untyped], ?request_id: String?) -> void
+    def inspect: () -> String
+  end
+
+  class ValidationError < Error
+  end
+
+  class AuthenticationError < Error
+  end
+
+  class PaymentRequiredError < Error
+  end
+
+  class ForbiddenError < Error
+  end
+
+  class PermissionError < ForbiddenError
+    attr_reader required_permission: String
+
+    def initialize: (required_permission: String, message: String, status: Integer, code: String,
+                     ?api_code: String?, ?details: Hash[String, untyped], ?request_id: String?) -> void
+  end
+
+  class NotFoundError < Error
+  end
+
+  class ConflictError < Error
+  end
+
+  class RateLimitError < Error
+    attr_reader retry_after_seconds: Integer?
+
+    def initialize: (message: String, status: Integer, code: String, ?retry_after_seconds: Integer?,
+                     ?api_code: String?, ?details: Hash[String, untyped], ?request_id: String?) -> void
+  end
+
+  class InternalServerError < Error
+  end
+
+  class NetworkError < Error
+    @original: Exception?
+
+    def initialize: (message: String, status: Integer, code: String, ?original: Exception?, ?api_code: String?,
+                     ?details: Hash[String, untyped], ?request_id: String?) -> void
+    def cause: () -> Exception?
+  end
+
+  class InvalidResponseError < Error
+  end
+
+  class MissingApiKeyError < Error
+  end
+
+  class WebhookVerificationError < Error
+    attr_reader reason: Symbol
+
+    def initialize: (reason: Symbol, message: String, status: Integer, code: String, ?api_code: String?,
+                     ?details: Hash[String, untyped], ?request_id: String?) -> void
+  end
+
+  class NoContent
+    def inspect: () -> String
+    def to_s: () -> String
+  end
+
+  class Response[out T] < Data
+    attr_reader data: T
+    attr_reader error: Error?
+    attr_reader status: Integer
+
+    def self.new: [T] (data: T, error: Error?, status: Integer) -> Response[T]
+    def self.success: [T] (T data, Integer status) -> Response[T]
+    def self.failure: (Error error) -> Response[untyped]
+    def success?: () -> bool
+    def failure?: () -> bool
+    def to_ary: () -> [T, Error?]
+    def unwrap!: () -> T
+  end
+
+  class HttpRequest < Data
+    attr_reader http_method: String
+    attr_reader url: String
+    attr_reader headers: Hash[String, String]
+    attr_reader body: String?
+    attr_reader timeout: number
+
+    def self.new: (http_method: String, url: String, headers: Hash[String, String], body: String?,
+                   timeout: number) -> instance
+    def inspect: () -> String
+    def to_s: () -> String
+  end
+
+  class HttpResponse < Data
+    attr_reader status: Integer
+    attr_reader headers: Hash[String, String]
+    attr_reader body: String
+
+    def self.new: (status: Integer, headers: Hash[String, String], body: String) -> instance
+    def header: (String name) -> String?
+  end
+
+  interface _Transport
+    def call: (HttpRequest request) -> HttpResponse
+  end
+
+  class RetryPolicy
+    DEFAULT_BASE_DELAY: Float
+    DEFAULT_MAX_DELAY: Integer
+    SINGLE_ATTEMPT: Integer
+
+    attr_reader max_attempts: Integer
+    attr_reader base_delay: number
+    attr_reader max_delay: number
+
+    def initialize: (max_attempts: Integer, ?base_delay: number, ?max_delay: number) -> void
+    def enabled?: () -> bool
+    def inspect: () -> String
+
+    private
+
+    def validate!: (String setting, bool valid) -> void
+  end
+
+  class Client
+    @options: Internal::Options
+    @introspection: Internal::IntrospectionCache
+
+    attr_reader emails: Resources::Emails
+    attr_reader domains: Resources::Domains
+    attr_reader templates: Resources::Templates
+    attr_reader audiences: Resources::Audiences
+    attr_reader broadcasts: Resources::Broadcasts
+    attr_reader senders: Resources::Senders
+    attr_reader suppressions: Resources::Suppressions
+    attr_reader webhooks: Resources::Webhooks
+    attr_reader stats: Resources::Stats
+
+    def initialize: (?api_key: String?, ?locale: String, ?timeout: number, ?retry_policy: RetryPolicy?,
+                     ?transport: _Transport?) -> void
+    def introspect: (?force_refresh: bool) -> Response[Models::ApiKeyInfo]
+    def invalidate_api_key_cache: () -> nil
+    def locale: () -> String
+    def timeout: () -> number
+    def inspect: () -> String
+    def to_s: () -> String
+
+    private
+
+    def build_resources: (Internal::Requester requester) -> void
+  end
+
+  module Webhook
+    SIGNATURE_HEADER: String
+    TIMESTAMP_HEADER: String
+    IDEMPOTENCY_HEADER: String
+    TEST_HEADER: String
+    DEFAULT_TOLERANCE: Integer
+
+    type headers = untyped
+    type clock = ^() -> (Time | Integer)
+
+    class Event < Data
+      attr_reader event_type: String?
+      attr_reader webhook_id: String?
+      attr_reader data: Hash[String, untyped]
+      attr_reader test: bool
+
+      def self.new: (event_type: String?, webhook_id: String?, data: Hash[String, untyped], test: bool) -> instance
+      def test?: () -> bool
+    end
+
+    def self?.verify: (payload: String, headers: headers, secret: String, ?tolerance: Integer,
+                       ?clock: clock?) -> bool
+    def self?.construct_event: (payload: String, headers: headers, secret: String, ?tolerance: Integer,
+                                ?clock: clock?, ?locale: String) -> Response[Event]
+    def self?.from_rack: (untyped request, secret: String, ?tolerance: Integer,
+                          ?clock: clock?, ?locale: String) -> Response[Event]
+  end
+end

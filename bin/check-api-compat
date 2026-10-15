@@ -1,0 +1,28 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "open3"
+require_relative "../tools/api_compat"
+
+ROOT = File.expand_path("..", __dir__)
+
+def git(*)
+  output, status = Open3.capture2("git", "-C", ROOT, *)
+  status.success? ? output : ""
+end
+
+base = git("tag", "--list", "v*", "--sort=-v:refname").lines.first&.strip
+if base.nil? || base.empty?
+  puts "Nenhuma versão publicada ainda; baseline da API pública será a primeira tag."
+  exit
+end
+
+signature_paths = git("ls-tree", "-r", "--name-only", base, "sig").lines.map(&:strip)
+old_sources = signature_paths.select { |path| path.end_with?(".rbs") }.map { |path| git("show", "#{base}:#{path}") }
+new_sources = Dir[File.join(ROOT, "sig/**/*.rbs")].map { |path| File.read(path) }
+changes = Tools::ApiCompat.breaking_changes(old_sources, new_sources)
+
+changes.each { |change| warn "Quebra de compatibilidade contra #{base}: #{change}" }
+abort("API pública incompatível com #{base}. Adicione e deprecie; nunca remova ou renomeie.") unless changes.empty?
+
+puts "API pública compatível com #{base}"

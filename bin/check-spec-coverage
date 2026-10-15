@@ -1,0 +1,25 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../tools/spec_coverage"
+
+ROOT = File.expand_path("..", __dir__)
+document = File.read(File.join(ROOT, "specs/SPEC.md"))
+sources = Dir[File.join(ROOT, "spec/**/*.rb")].to_h { |path| [path.delete_prefix("#{ROOT}/"), File.read(path)] }
+result = Tools::SpecCoverage.evaluate(document, sources)
+
+if ARGV.include?("--report")
+  result.requirements.each do |id|
+    files = result.references.fetch(id, [])
+    puts "#{id}\t#{files.empty? ? "-" : files.join(", ")}"
+  end
+  exit
+end
+
+result.uncovered.each { |id| warn "Requisito sem teste: #{id}" }
+result.unknown.each { |id| warn "Teste cita requisito inexistente: #{id} (#{result.references[id].join(", ")})" }
+unless result.complete?
+  abort("Rastreabilidade SDD incompleta: #{result.uncovered.size} sem teste, #{result.unknown.size} desconhecidos")
+end
+
+puts "Rastreabilidade SDD completa: #{result.requirements.size} requisitos cobertos"

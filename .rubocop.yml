@@ -1,0 +1,138 @@
+plugins:
+  - rubocop-performance
+  - rubocop-rspec
+
+require:
+  - ./rubocop/coffeemail.rb
+
+AllCops:
+  TargetRubyVersion: 3.3
+  NewCops: enable
+  SuggestExtensions: false
+  Exclude:
+    - vendor/**/*
+    - tmp/**/*
+    - pkg/**/*
+
+CoffeeMail/NoComments:
+  Enabled: true
+
+CoffeeMail/NoElse:
+  Enabled: true
+
+CoffeeMail/NoCase:
+  Enabled: true
+
+CoffeeMail/MaxDepth:
+  Enabled: true
+  Max: 3
+
+CoffeeMail/RescueOnlyInAdapters:
+  Enabled: true
+  Include:
+    - lib/**/*.rb
+  AllowedFiles:
+    - lib/coffeemail/internal/transport_guard.rb
+    - lib/coffeemail/internal/wire.rb
+    - lib/coffeemail/internal/options.rb
+    - lib/coffeemail/response.rb
+    - lib/coffeemail/retry_policy.rb
+
+CoffeeMail/NoConsole:
+  Enabled: true
+  Include:
+    - lib/**/*.rb
+
+Metrics/BlockNesting:
+  Max: 3
+
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+Style/StringLiteralsInInterpolation:
+  EnforcedStyle: double_quotes
+
+Style/Documentation:
+  Include:
+    - lib/**/*.rb
+  Exclude:
+    - lib/coffeemail/internal/**/*.rb
+
+Style/TrailingCommaInArguments:
+  EnforcedStyleForMultiline: comma
+
+Style/TrailingCommaInArrayLiteral:
+  EnforcedStyleForMultiline: comma
+
+Style/TrailingCommaInHashLiteral:
+  EnforcedStyleForMultiline: comma
+
+Layout/LineLength:
+  Max: 120
+  AllowedPatterns:
+    - '\A\s*#'
+
+Metrics/MethodLength:
+  Max: 15
+
+Metrics/ClassLength:
+  Max: 200
+
+Metrics/ParameterLists:
+  CountKeywordArgs: false
+
+Metrics/BlockLength:
+  Exclude:
+    - spec/**/*.rb
+    - coffeemail.gemspec
+
+Naming/FileName:
+  Exclude:
+    - bin/*
+
+RSpec/ExampleLength:
+  Max: 20
+
+RSpec/MultipleExpectations:
+  Max: 6
+
+RSpec/NestedGroups:
+  Max: 4
+
+RSpec/SpecFilePathFormat:
+  Enabled: false
+
+# Nomes de método do contrato único dos SDKs (get_tags, get_events, get_health, get_warmup_status).
+Naming/AccessorMethodName:
+  Exclude:
+    - lib/coffeemail/resources/**/*.rb
+
+# Webhook.verify devolve Boolean e mantém o nome do contrato.
+Naming/PredicateMethod:
+  AllowedMethods:
+    - verify
+
+# O Steep não infere tipos no bloco de Data.define nem em ** anônimo; herança e kwargs nomeados mantêm a tipagem estrita.
+Style/DataInheritance:
+  Enabled: false
+
+Style/ArgumentsForwarding:
+  UseAnonymousForwarding: false
+
+# Specs de comportamento transversal (envelope, transporte, contrato, gates) não descrevem uma única classe.
+RSpec/DescribeClass:
+  Exclude:
+    - spec/conformance/**/*.rb
+    - spec/quality/**/*.rb
+    - spec/errors_spec.rb
+    - spec/examples_spec.rb
+    - spec/models_spec.rb
+    - spec/operations_spec.rb
+    - spec/pagination_spec.rb
+    - spec/retry_spec.rb
+    - spec/transport_spec.rb
+
+# Tabela de casos de operação: dados, não lógica.
+Metrics/ModuleLength:
+  Exclude:
+    - spec/support/operation_cases.rb

@@ -1,0 +1,784 @@
+# Gerado por bin/generate-signatures a partir de lib/coffeemail/models e enums. Não edite.
+module CoffeeMail
+  module Models
+  end
+end
+
+module CoffeeMail::AttachmentDisposition
+  ATTACHMENT: String
+  INLINE: String
+  ALL: Array[String]
+end
+
+module CoffeeMail::BroadcastStatus
+  DRAFT: String
+  SCHEDULED: String
+  SENDING: String
+  SENT: String
+  FAILED: String
+  CANCELLED: String
+  ALL: Array[String]
+end
+
+module CoffeeMail::DnsResolution
+  FOUND: String
+  ABSENT: String
+  UNKNOWN: String
+  ALL: Array[String]
+end
+
+module CoffeeMail::DomainHealthStatus
+  HEALTHY: String
+  WARNING: String
+  CRITICAL: String
+  ALL: Array[String]
+end
+
+module CoffeeMail::DomainStatus
+  PENDING: String
+  VERIFIED: String
+  FAILED: String
+  ALL: Array[String]
+end
+
+module CoffeeMail::DomainStatusReason
+  DNS_RECORDS_MISSING: String
+  PROVIDER_PENDING: String
+  PROVIDER_FAILED: String
+  ALL: Array[String]
+end
+
+module CoffeeMail::EmailStatus
+  QUEUED: String
+  PROCESSING: String
+  SENT: String
+  DELIVERED: String
+  BOUNCED: String
+  COMPLAINED: String
+  FAILED: String
+  SKIPPED: String
+  SCHEDULED: String
+  CANCELLED: String
+  ALL: Array[String]
+end
+
+module CoffeeMail::EmailType
+  TRANSACTIONAL: String
+  BROADCAST: String
+  ALL: Array[String]
+end
+
+module CoffeeMail::StatsGranularity
+  DAY: String
+  WEEK: String
+  MONTH: String
+  ALL: Array[String]
+end
+
+module CoffeeMail::SuppressionReason
+  MANUAL: String
+  BOUNCE: String
+  ISP_BLOCK: String
+  MAILBOX_NOT_FOUND: String
+  COMPLAINT: String
+  UNSUBSCRIBE: String
+  ALL: Array[String]
+end
+
+module CoffeeMail::SuppressionSource
+  MANUAL: String
+  AUTO: String
+  ALL: Array[String]
+end
+
+module CoffeeMail::SuppressionStatus
+  ACTIVE: String
+  EXPIRED: String
+  INACTIVE: String
+  ALL: Array[String]
+end
+
+module CoffeeMail::TemplateFormat
+  HTML: String
+  REACT: String
+  ALL: Array[String]
+end
+
+module CoffeeMail::WebhookDeliveryStatus
+  PENDING: String
+  SUCCESS: String
+  FAILED: String
+  EXHAUSTED: String
+  ALL: Array[String]
+end
+
+module CoffeeMail::WebhookStatus
+  ACTIVE: String
+  PAUSED: String
+  DISABLED: String
+  ALL: Array[String]
+end
+
+module CoffeeMail::Webhook::EventType
+  EMAIL_QUEUED: String
+  EMAIL_PROCESSING: String
+  EMAIL_SENT: String
+  EMAIL_DELIVERED: String
+  EMAIL_DELIVERY_DELAYED: String
+  EMAIL_OPENED: String
+  EMAIL_CLICKED: String
+  EMAIL_BOUNCED: String
+  EMAIL_COMPLAINED: String
+  EMAIL_FAILED: String
+  EMAIL_SUPPRESSED: String
+  EMAIL_SCHEDULED: String
+  EMAIL_CANCELLED: String
+  EMAIL_UNSUBSCRIBED: String
+  BILLING_PLAN_CHANGED: String
+  WEBHOOK_TEST: String
+  ALL: Array[String]
+end
+
+class CoffeeMail::Models::ApiKeyInfo < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader id: String?
+  attr_reader name: String?
+  attr_reader organisation_id: String?
+  attr_reader scopes: Array[String]?
+  def self.new: (?id: String?, ?name: String?, ?organisation_id: String?, ?scopes: Array[String]?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::ApiKeyInfo
+end
+
+class CoffeeMail::Models::ApiKeyReference < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader id: String?
+  attr_reader name: String?
+  def self.new: (?id: String?, ?name: String?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::ApiKeyReference
+end
+
+class CoffeeMail::Models::AudienceDetail < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader id: String?
+  attr_reader name: String?
+  attr_reader description: String?
+  attr_reader active: bool?
+  attr_reader total_contacts: Integer?
+  attr_reader contacts_count: Integer?
+  attr_reader created_at: Time?
+  attr_reader updated_at: Time?
+  def self.new: (?id: String?, ?name: String?, ?description: String?, ?active: bool?, ?total_contacts: Integer?, ?contacts_count: Integer?, ?created_at: Time?, ?updated_at: Time?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::AudienceDetail
+end
+
+class CoffeeMail::Models::AudienceList < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader audiences: Array[CoffeeMail::Models::AudienceDetail]?
+  attr_reader total: Integer?
+  def self.new: (?audiences: Array[CoffeeMail::Models::AudienceDetail]?, ?total: Integer?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::AudienceList
+end
+
+class CoffeeMail::Models::BatchSendItem < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader ok: bool?
+  attr_reader data: CoffeeMail::Models::SendEmailResult?
+  attr_reader error: String?
+  def self.new: (?ok: bool?, ?data: CoffeeMail::Models::SendEmailResult?, ?error: String?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::BatchSendItem
+end
+
+class CoffeeMail::Models::BroadcastDetail < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader id: String?
+  attr_reader audience_id: String?
+  attr_reader audience_name: String?
+  attr_reader template_id: String?
+  attr_reader subject: String?
+  attr_reader from_email: String?
+  attr_reader reply_to: String?
+  attr_reader status: String?
+  attr_reader scheduled_at: Time?
+  attr_reader sent_at: Time?
+  attr_reader cancelled_at: Time?
+  attr_reader recipients_total: Integer?
+  attr_reader recipients_queued: Integer?
+  attr_reader recipients_failed: Integer?
+  attr_reader created_at: Time?
+  attr_reader updated_at: Time?
+  def self.new: (?id: String?, ?audience_id: String?, ?audience_name: String?, ?template_id: String?, ?subject: String?, ?from_email: String?, ?reply_to: String?, ?status: String?, ?scheduled_at: Time?, ?sent_at: Time?, ?cancelled_at: Time?, ?recipients_total: Integer?, ?recipients_queued: Integer?, ?recipients_failed: Integer?, ?created_at: Time?, ?updated_at: Time?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::BroadcastDetail
+end
+
+class CoffeeMail::Models::BroadcastList < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader broadcasts: Array[CoffeeMail::Models::BroadcastDetail]?
+  attr_reader next_cursor: String?
+  def self.new: (?broadcasts: Array[CoffeeMail::Models::BroadcastDetail]?, ?next_cursor: String?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::BroadcastList
+end
+
+class CoffeeMail::Models::BulkAddContactsResult < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader inserted: Integer?
+  attr_reader skipped: Integer?
+  attr_reader errors: Array[CoffeeMail::Models::BulkContactError]?
+  def self.new: (?inserted: Integer?, ?skipped: Integer?, ?errors: Array[CoffeeMail::Models::BulkContactError]?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::BulkAddContactsResult
+end
+
+class CoffeeMail::Models::BulkContactError < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader email: String?
+  attr_reader reason: String?
+  def self.new: (?email: String?, ?reason: String?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::BulkContactError
+end
+
+class CoffeeMail::Models::BulkSuppressionsResult < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader inserted_count: Integer?
+  def self.new: (?inserted_count: Integer?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::BulkSuppressionsResult
+end
+
+class CoffeeMail::Models::CancelledBroadcast < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader id: String?
+  attr_reader status: String?
+  attr_reader cancelled_at: Time?
+  def self.new: (?id: String?, ?status: String?, ?cancelled_at: Time?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::CancelledBroadcast
+end
+
+class CoffeeMail::Models::ChannelStats < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader sent: Integer?
+  attr_reader delivered: Integer?
+  attr_reader bounced: Integer?
+  attr_reader opened: Integer?
+  attr_reader clicked: Integer?
+  def self.new: (?sent: Integer?, ?delivered: Integer?, ?bounced: Integer?, ?opened: Integer?, ?clicked: Integer?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::ChannelStats
+end
+
+class CoffeeMail::Models::Contact < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader id: String?
+  attr_reader email: String?
+  attr_reader first_name: String?
+  attr_reader last_name: String?
+  attr_reader metadata: Hash[String, untyped]?
+  attr_reader created_at: Time?
+  def self.new: (?id: String?, ?email: String?, ?first_name: String?, ?last_name: String?, ?metadata: Hash[String, untyped]?, ?created_at: Time?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::Contact
+end
+
+class CoffeeMail::Models::ContactList < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader contacts: Array[CoffeeMail::Models::Contact]?
+  attr_reader total: Integer?
+  def self.new: (?contacts: Array[CoffeeMail::Models::Contact]?, ?total: Integer?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::ContactList
+end
+
+class CoffeeMail::Models::CreatedDomain < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader id: String?
+  attr_reader name: String?
+  attr_reader status: String?
+  attr_reader dkim_records_to_publish: Array[CoffeeMail::Models::DnsRecord]?
+  def self.new: (?id: String?, ?name: String?, ?status: String?, ?dkim_records_to_publish: Array[CoffeeMail::Models::DnsRecord]?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::CreatedDomain
+end
+
+class CoffeeMail::Models::DeletedDomain < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader ok: bool?
+  def self.new: (?ok: bool?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::DeletedDomain
+end
+
+class CoffeeMail::Models::DnsCheck < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader ok: bool?
+  attr_reader resolution: String?
+  attr_reader expected: String?
+  attr_reader got: String?
+  attr_reader matches: Array[String]?
+  def self.new: (?ok: bool?, ?resolution: String?, ?expected: String?, ?got: String?, ?matches: Array[String]?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::DnsCheck
+end
+
+class CoffeeMail::Models::DnsRecord < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader type: String?
+  attr_reader host: String?
+  attr_reader value: String?
+  attr_reader ttl: Integer?
+  attr_reader is_infrastructure: bool?
+  def self.new: (?type: String?, ?host: String?, ?value: String?, ?ttl: Integer?, ?is_infrastructure: bool?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::DnsRecord
+end
+
+class CoffeeMail::Models::DomainChecks < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader spf: CoffeeMail::Models::DnsCheck?
+  attr_reader dkim: CoffeeMail::Models::DnsCheck?
+  attr_reader dmarc: CoffeeMail::Models::DnsCheck?
+  attr_reader ownership: CoffeeMail::Models::DnsCheck?
+  attr_reader infrastructure_spf: CoffeeMail::Models::DnsCheck?
+  def self.new: (?spf: CoffeeMail::Models::DnsCheck?, ?dkim: CoffeeMail::Models::DnsCheck?, ?dmarc: CoffeeMail::Models::DnsCheck?, ?ownership: CoffeeMail::Models::DnsCheck?, ?infrastructure_spf: CoffeeMail::Models::DnsCheck?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::DomainChecks
+end
+
+class CoffeeMail::Models::DomainDetail < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader id: String?
+  attr_reader name: String?
+  attr_reader status: String?
+  attr_reader status_reason: String?
+  attr_reader sending_identity: CoffeeMail::Models::SendingIdentity?
+  attr_reader dkim_selector: String?
+  attr_reader dkim_public_key: String?
+  attr_reader verified_at: Time?
+  attr_reader last_check_at: Time?
+  attr_reader created_at: Time?
+  attr_reader dns_records_to_publish: Array[CoffeeMail::Models::DnsRecord]?
+  def self.new: (?id: String?, ?name: String?, ?status: String?, ?status_reason: String?, ?sending_identity: CoffeeMail::Models::SendingIdentity?, ?dkim_selector: String?, ?dkim_public_key: String?, ?verified_at: Time?, ?last_check_at: Time?, ?created_at: Time?, ?dns_records_to_publish: Array[CoffeeMail::Models::DnsRecord]?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::DomainDetail
+end
+
+class CoffeeMail::Models::DomainHealth < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader domain_id: String?
+  attr_reader domain: String?
+  attr_reader status: String?
+  attr_reader spf: CoffeeMail::Models::HealthCheck?
+  attr_reader dkim: CoffeeMail::Models::HealthCheck?
+  attr_reader dmarc: CoffeeMail::Models::HealthCheck?
+  attr_reader checked_at: Time?
+  def self.new: (?domain_id: String?, ?domain: String?, ?status: String?, ?spf: CoffeeMail::Models::HealthCheck?, ?dkim: CoffeeMail::Models::HealthCheck?, ?dmarc: CoffeeMail::Models::HealthCheck?, ?checked_at: Time?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::DomainHealth
+end
+
+class CoffeeMail::Models::DomainList < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader domains: Array[CoffeeMail::Models::DomainSummary]?
+  def self.new: (?domains: Array[CoffeeMail::Models::DomainSummary]?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::DomainList
+end
+
+class CoffeeMail::Models::DomainSummary < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader id: String?
+  attr_reader name: String?
+  attr_reader status: String?
+  attr_reader status_reason: String?
+  attr_reader dkim_selector: String?
+  attr_reader dkim_public_key: String?
+  attr_reader verified_at: Time?
+  attr_reader last_check_at: Time?
+  attr_reader created_at: Time?
+  def self.new: (?id: String?, ?name: String?, ?status: String?, ?status_reason: String?, ?dkim_selector: String?, ?dkim_public_key: String?, ?verified_at: Time?, ?last_check_at: Time?, ?created_at: Time?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::DomainSummary
+end
+
+class CoffeeMail::Models::DomainVerification < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader id: String?
+  attr_reader name: String?
+  attr_reader status: String?
+  attr_reader status_reason: String?
+  attr_reader verified_at: Time?
+  attr_reader checks: CoffeeMail::Models::DomainChecks?
+  attr_reader required_checks: Array[String]?
+  attr_reader sending_identity: CoffeeMail::Models::SendingIdentity?
+  def self.new: (?id: String?, ?name: String?, ?status: String?, ?status_reason: String?, ?verified_at: Time?, ?checks: CoffeeMail::Models::DomainChecks?, ?required_checks: Array[String]?, ?sending_identity: CoffeeMail::Models::SendingIdentity?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::DomainVerification
+end
+
+class CoffeeMail::Models::DomainWarmup < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader domain_id: String?
+  attr_reader current_day: Integer?
+  attr_reader daily_quota: Integer?
+  attr_reader sent_today: Integer?
+  attr_reader remaining_today: Integer?
+  attr_reader quota_used_percent: Integer?
+  attr_reader last_send_date: String?
+  def self.new: (?domain_id: String?, ?current_day: Integer?, ?daily_quota: Integer?, ?sent_today: Integer?, ?remaining_today: Integer?, ?quota_used_percent: Integer?, ?last_send_date: String?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::DomainWarmup
+end
+
+class CoffeeMail::Models::EmailDetail < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader id: String?
+  attr_reader from: String?
+  attr_reader to: Array[String]?
+  attr_reader cc: Array[String]?
+  attr_reader bcc: Array[String]?
+  attr_reader subject: String?
+  attr_reader status: String?
+  attr_reader attempts: Integer?
+  attr_reader last_error: String?
+  attr_reader message_id: String?
+  attr_reader api_key: CoffeeMail::Models::ApiKeyReference?
+  attr_reader created_at: Time?
+  attr_reader scheduled_at: Time?
+  attr_reader sent_at: Time?
+  attr_reader delivered_at: Time?
+  attr_reader bounced_at: Time?
+  attr_reader failed_at: Time?
+  attr_reader complained_at: Time?
+  attr_reader suppressed_at: Time?
+  attr_reader opened_at: Time?
+  attr_reader first_clicked_at: Time?
+  attr_reader open_count: Integer?
+  attr_reader click_count: Integer?
+  attr_reader proxy_open_count: Integer?
+  attr_reader tags: Array[CoffeeMail::Models::Tag]?
+  attr_reader html: String?
+  attr_reader text: String?
+  def self.new: (?id: String?, ?from: String?, ?to: Array[String]?, ?cc: Array[String]?, ?bcc: Array[String]?, ?subject: String?, ?status: String?, ?attempts: Integer?, ?last_error: String?, ?message_id: String?, ?api_key: CoffeeMail::Models::ApiKeyReference?, ?created_at: Time?, ?scheduled_at: Time?, ?sent_at: Time?, ?delivered_at: Time?, ?bounced_at: Time?, ?failed_at: Time?, ?complained_at: Time?, ?suppressed_at: Time?, ?opened_at: Time?, ?first_clicked_at: Time?, ?open_count: Integer?, ?click_count: Integer?, ?proxy_open_count: Integer?, ?tags: Array[CoffeeMail::Models::Tag]?, ?html: String?, ?text: String?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::EmailDetail
+end
+
+class CoffeeMail::Models::EmailEvent < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader type: String?
+  attr_reader timestamp: Time?
+  attr_reader metadata: Hash[String, untyped]?
+  def self.new: (?type: String?, ?timestamp: Time?, ?metadata: Hash[String, untyped]?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::EmailEvent
+end
+
+class CoffeeMail::Models::EmailEvents < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader id: String?
+  attr_reader events: Array[CoffeeMail::Models::EmailEvent]?
+  def self.new: (?id: String?, ?events: Array[CoffeeMail::Models::EmailEvent]?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::EmailEvents
+end
+
+class CoffeeMail::Models::EmailList < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader emails: Array[CoffeeMail::Models::EmailDetail]?
+  attr_reader next_cursor: String?
+  def self.new: (?emails: Array[CoffeeMail::Models::EmailDetail]?, ?next_cursor: String?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::EmailList
+end
+
+class CoffeeMail::Models::EmailTags < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader tags: Array[CoffeeMail::Models::TagValues]?
+  def self.new: (?tags: Array[CoffeeMail::Models::TagValues]?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::EmailTags
+end
+
+class CoffeeMail::Models::FormattedTemplate < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader html: String?
+  def self.new: (?html: String?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::FormattedTemplate
+end
+
+class CoffeeMail::Models::HealthCheck < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader ok: bool?
+  attr_reader expected: String?
+  attr_reader got: String?
+  def self.new: (?ok: bool?, ?expected: String?, ?got: String?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::HealthCheck
+end
+
+class CoffeeMail::Models::RenderedTemplate < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader html: String?
+  attr_reader text: String?
+  def self.new: (?html: String?, ?text: String?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::RenderedTemplate
+end
+
+class CoffeeMail::Models::RotatedSecret < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader webhook_id: String?
+  attr_reader secret: String?
+  def self.new: (?webhook_id: String?, ?secret: String?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::RotatedSecret
+end
+
+class CoffeeMail::Models::SanitizeReport < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader scripts: Integer?
+  attr_reader iframes: Integer?
+  attr_reader javascript_hrefs: Integer?
+  attr_reader event_handlers: Integer?
+  def self.new: (?scripts: Integer?, ?iframes: Integer?, ?javascript_hrefs: Integer?, ?event_handlers: Integer?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::SanitizeReport
+end
+
+class CoffeeMail::Models::SendEmailResult < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader id: String?
+  attr_reader status: String?
+  attr_reader queued_at: Time?
+  def self.new: (?id: String?, ?status: String?, ?queued_at: Time?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::SendEmailResult
+end
+
+class CoffeeMail::Models::SenderDetail < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader id: String?
+  attr_reader email: String?
+  attr_reader display_name: String?
+  attr_reader verification_token: String?
+  attr_reader verified_at: Time?
+  attr_reader active: bool?
+  attr_reader created_at: Time?
+  def self.new: (?id: String?, ?email: String?, ?display_name: String?, ?verification_token: String?, ?verified_at: Time?, ?active: bool?, ?created_at: Time?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::SenderDetail
+end
+
+class CoffeeMail::Models::SenderList < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader senders: Array[CoffeeMail::Models::SenderDetail]?
+  def self.new: (?senders: Array[CoffeeMail::Models::SenderDetail]?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::SenderList
+end
+
+class CoffeeMail::Models::SendingIdentity < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader provider: String?
+  attr_reader state: String?
+  attr_reader last_synced_at: Time?
+  def self.new: (?provider: String?, ?state: String?, ?last_synced_at: Time?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::SendingIdentity
+end
+
+class CoffeeMail::Models::SentBroadcast < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader id: String?
+  attr_reader status: String?
+  attr_reader recipients_total: Integer?
+  attr_reader recipients_queued: Integer?
+  def self.new: (?id: String?, ?status: String?, ?recipients_total: Integer?, ?recipients_queued: Integer?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::SentBroadcast
+end
+
+class CoffeeMail::Models::Stats < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader total_sent: Integer?
+  attr_reader total_delivered: Integer?
+  attr_reader total_bounced: Integer?
+  attr_reader total_failed: Integer?
+  attr_reader total_opened: Integer?
+  attr_reader total_clicked: Integer?
+  attr_reader delivery_rate: Float?
+  attr_reader open_rate: Float?
+  attr_reader click_rate: Float?
+  attr_reader breakdown: CoffeeMail::Models::StatsBreakdown?
+  attr_reader top_clients: Array[CoffeeMail::Models::TopClient]?
+  attr_reader data: Array[CoffeeMail::Models::StatsPoint]?
+  def self.new: (?total_sent: Integer?, ?total_delivered: Integer?, ?total_bounced: Integer?, ?total_failed: Integer?, ?total_opened: Integer?, ?total_clicked: Integer?, ?delivery_rate: Float?, ?open_rate: Float?, ?click_rate: Float?, ?breakdown: CoffeeMail::Models::StatsBreakdown?, ?top_clients: Array[CoffeeMail::Models::TopClient]?, ?data: Array[CoffeeMail::Models::StatsPoint]?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::Stats
+end
+
+class CoffeeMail::Models::StatsBreakdown < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader transactional: CoffeeMail::Models::ChannelStats?
+  attr_reader broadcast: CoffeeMail::Models::ChannelStats?
+  def self.new: (?transactional: CoffeeMail::Models::ChannelStats?, ?broadcast: CoffeeMail::Models::ChannelStats?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::StatsBreakdown
+end
+
+class CoffeeMail::Models::StatsPoint < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader period: String?
+  attr_reader sent: Integer?
+  attr_reader delivered: Integer?
+  attr_reader bounced: Integer?
+  attr_reader failed: Integer?
+  attr_reader opened: Integer?
+  attr_reader clicked: Integer?
+  attr_reader transactional: Integer?
+  attr_reader broadcast: Integer?
+  def self.new: (?period: String?, ?sent: Integer?, ?delivered: Integer?, ?bounced: Integer?, ?failed: Integer?, ?opened: Integer?, ?clicked: Integer?, ?transactional: Integer?, ?broadcast: Integer?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::StatsPoint
+end
+
+class CoffeeMail::Models::SuppressionDetail < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader id: String?
+  attr_reader email: String?
+  attr_reader reason: String?
+  attr_reader source: String?
+  attr_reader category: String?
+  attr_reader status: String?
+  attr_reader expires_at: Time?
+  attr_reader created_at: Time?
+  def self.new: (?id: String?, ?email: String?, ?reason: String?, ?source: String?, ?category: String?, ?status: String?, ?expires_at: Time?, ?created_at: Time?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::SuppressionDetail
+end
+
+class CoffeeMail::Models::SuppressionList < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader suppressions: Array[CoffeeMail::Models::SuppressionDetail]?
+  attr_reader next_cursor: String?
+  def self.new: (?suppressions: Array[CoffeeMail::Models::SuppressionDetail]?, ?next_cursor: String?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::SuppressionList
+end
+
+class CoffeeMail::Models::Tag < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader name: String?
+  attr_reader value: String?
+  def self.new: (?name: String?, ?value: String?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::Tag
+end
+
+class CoffeeMail::Models::TagValues < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader name: String?
+  attr_reader values: Array[String]?
+  def self.new: (?name: String?, ?values: Array[String]?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::TagValues
+end
+
+class CoffeeMail::Models::TemplateDetail < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader id: String?
+  attr_reader organisation_id: String?
+  attr_reader name: String?
+  attr_reader alias: String?
+  attr_reader subject: String?
+  attr_reader preheader: String?
+  attr_reader html: String?
+  attr_reader content_json: untyped?
+  attr_reader text_payload: String?
+  attr_reader variables: Array[CoffeeMail::Models::TemplateVariable]?
+  attr_reader is_active: bool?
+  attr_reader format: String?
+  attr_reader source_locale: String?
+  attr_reader created_at: Time?
+  attr_reader updated_at: Time?
+  def self.new: (?id: String?, ?organisation_id: String?, ?name: String?, ?alias: String?, ?subject: String?, ?preheader: String?, ?html: String?, ?content_json: untyped?, ?text_payload: String?, ?variables: Array[CoffeeMail::Models::TemplateVariable]?, ?is_active: bool?, ?format: String?, ?source_locale: String?, ?created_at: Time?, ?updated_at: Time?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::TemplateDetail
+end
+
+class CoffeeMail::Models::TemplateVariable < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader name: String?
+  attr_reader description: String?
+  attr_reader type: String?
+  attr_reader fallback_value: String?
+  def self.new: (?name: String?, ?description: String?, ?type: String?, ?fallback_value: String?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::TemplateVariable
+end
+
+class CoffeeMail::Models::TestRenderResult < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader html: String?
+  attr_reader text: String?
+  attr_reader sanitize_report: CoffeeMail::Models::SanitizeReport?
+  def self.new: (?html: String?, ?text: String?, ?sanitize_report: CoffeeMail::Models::SanitizeReport?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::TestRenderResult
+end
+
+class CoffeeMail::Models::TestSendResult < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader success: bool?
+  attr_reader message_id: String?
+  attr_reader recipient: String?
+  def self.new: (?success: bool?, ?message_id: String?, ?recipient: String?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::TestSendResult
+end
+
+class CoffeeMail::Models::ToggledWebhook < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader id: String?
+  attr_reader status: String?
+  def self.new: (?id: String?, ?status: String?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::ToggledWebhook
+end
+
+class CoffeeMail::Models::TopClient < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader name: String?
+  attr_reader count: Integer?
+  attr_reader percentage: Float?
+  attr_reader device_type: String?
+  def self.new: (?name: String?, ?count: Integer?, ?percentage: Float?, ?device_type: String?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::TopClient
+end
+
+class CoffeeMail::Models::UpdatedResource < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader id: String?
+  def self.new: (?id: String?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::UpdatedResource
+end
+
+class CoffeeMail::Models::VerifiedSender < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader id: String?
+  attr_reader email: String?
+  def self.new: (?id: String?, ?email: String?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::VerifiedSender
+end
+
+class CoffeeMail::Models::WebhookDelivery < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader id: String?
+  attr_reader webhook_id: String?
+  attr_reader email_event_id: String?
+  attr_reader event_type: String?
+  attr_reader response_status: Integer?
+  attr_reader response_body: String?
+  attr_reader attempts: Integer?
+  attr_reader last_error: String?
+  attr_reader status: String?
+  attr_reader next_run_at: Time?
+  attr_reader created_at: Time?
+  def self.new: (?id: String?, ?webhook_id: String?, ?email_event_id: String?, ?event_type: String?, ?response_status: Integer?, ?response_body: String?, ?attempts: Integer?, ?last_error: String?, ?status: String?, ?next_run_at: Time?, ?created_at: Time?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::WebhookDelivery
+end
+
+class CoffeeMail::Models::WebhookDeliveryList < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader deliveries: Array[CoffeeMail::Models::WebhookDelivery]?
+  def self.new: (?deliveries: Array[CoffeeMail::Models::WebhookDelivery]?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::WebhookDeliveryList
+end
+
+class CoffeeMail::Models::WebhookDetail < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader id: String?
+  attr_reader url: String?
+  attr_reader events: Array[String]?
+  attr_reader status: String?
+  attr_reader description: String?
+  attr_reader has_secret: bool?
+  attr_reader secret: String?
+  attr_reader secret_preview: String?
+  attr_reader created_at: Time?
+  def self.new: (?id: String?, ?url: String?, ?events: Array[String]?, ?status: String?, ?description: String?, ?has_secret: bool?, ?secret: String?, ?secret_preview: String?, ?created_at: Time?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::WebhookDetail
+end
+
+class CoffeeMail::Models::WebhookList < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader webhooks: Array[CoffeeMail::Models::WebhookDetail]?
+  def self.new: (?webhooks: Array[CoffeeMail::Models::WebhookDetail]?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::WebhookList
+end
+
+class CoffeeMail::Models::WebhookTestResult < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader status: String?
+  attr_reader status_code: Integer?
+  attr_reader body: String?
+  attr_reader error: String?
+  def self.new: (?status: String?, ?status_code: Integer?, ?body: String?, ?error: String?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::WebhookTestResult
+end

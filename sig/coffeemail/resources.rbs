@@ -1,0 +1,168 @@
+module CoffeeMail
+  module Resources
+    class Base
+      @requester: Internal::Requester
+
+      def initialize: (Internal::Requester requester) -> void
+      def inspect: () -> String
+
+      private
+
+      def resource_name: () -> String
+      def request: [T] (String name, String http_method, String path, Internal::decoder[T] decoder,
+                        **untyped options) -> Response[T]
+      def route: (String template, *String params) -> String
+      def body: (Hash[Symbol, untyped] values, Internal::Fields::table table) -> Hash[String, untyped]
+      def query: (Hash[Symbol, untyped] values, Internal::Fields::table table) -> Hash[String, String]
+      def object: [T] (Internal::_Model[T] model) -> Internal::decoder[T]
+      def list_of: [T] (Internal::_Model[T] model, ?String? key) -> Internal::decoder[Array[T]]
+      def raw: () -> Internal::decoder[untyped]
+    end
+
+    class Emails < Base
+      include Internal::Constants
+
+      def send: (from: address, to: addresses, ?subject: String?, ?html: String?, ?text: String?,
+                 ?cc: addresses?, ?bcc: addresses?, ?reply_to: address?, ?headers: Hash[String, String]?,
+                 ?attachments: Array[item]?, ?template_id: String?, ?variables: json_object?, ?email_type: String?,
+                 ?suppression_category: String?, ?tags: Array[item]?, ?scheduled_at: (Time | String)?,
+                 ?metadata: json_object?, ?idempotency_key: String?, ?sandbox: bool) -> Response[Models::SendEmailResult]
+      def send_batch: (Array[item] items) -> Response[Array[Models::BatchSendItem]]
+      def get: (String id) -> Response[Models::EmailDetail]
+      def list: (?status: String?, ?recipient: String?, ?from_email: String?, ?subject_contains: String?,
+                 ?api_key_id: String?, ?tag: String?, ?from: (Time | String)?, ?to: (Time | String)?,
+                 ?after: String?, ?limit: Integer?) -> Response[Models::EmailList]
+      def pages: (**untyped filters) -> Enumerator::Lazy[Response[Models::EmailList], void]
+      def get_events: (String id) -> Response[Models::EmailEvents]
+      def get_tags: () -> Response[Models::EmailTags]
+      def cancel: (String id) -> Response[untyped]
+      def resend: (String id) -> Response[Models::SendEmailResult]
+
+      private
+
+      def send_headers: (untyped idempotency_key, untyped sandbox) -> Hash[String, String]
+    end
+
+    class Domains < Base
+      include Internal::Constants
+
+      def create: (name: String) -> Response[Models::CreatedDomain]
+      def list: () -> Response[Models::DomainList]
+      def get: (String id) -> Response[Models::DomainDetail]
+      def verify: (String id) -> Response[Models::DomainVerification]
+      def delete: (String id) -> Response[Models::DeletedDomain]
+      def get_health: (String id) -> Response[Models::DomainHealth]
+      def get_warmup_status: (String id) -> Response[Models::DomainWarmup]
+    end
+
+    class Templates < Base
+      include Internal::Constants
+
+      def create: (name: String, html: String, ?alias: String?, ?subject: String?, ?preheader: String?,
+                   ?content_json: untyped, ?text_payload: String?, ?variables: Array[item]?, ?format: String?,
+                   ?source_locale: String?) -> Response[Models::TemplateDetail]
+      def list: () -> Response[Array[Models::TemplateDetail]]
+      def get: (String id) -> Response[Models::TemplateDetail]
+      def update: (String id, ?name: String?, ?html: String?, ?alias: String?, ?subject: String?,
+                   ?preheader: String?, ?content_json: untyped, ?text_payload: String?, ?variables: Array[item]?,
+                   ?format: String?, ?source_locale: String?, ?is_active: bool?) -> Response[Models::TemplateDetail]
+      def delete: (String id) -> Response[untyped]
+      def preview: (html: String, ?format: String?, ?variables: json_object?) -> Response[Models::RenderedTemplate]
+      def preview_by_id: (String id, ?variables: json_object?) -> Response[Models::RenderedTemplate]
+      def format: (html: String, ?format: String?) -> Response[Models::FormattedTemplate]
+      def test_render: (html: String, ?format: String?, ?variables: json_object?) -> Response[Models::TestRenderResult]
+      def test_send: (String id, to: String, ?from: String?, ?subject: String?,
+                      ?variables: json_object?) -> Response[Models::TestSendResult]
+    end
+
+    class Audiences < Base
+      include Internal::Constants
+
+      attr_reader contacts: Contacts
+
+      def create: (name: String, ?description: String?) -> Response[Models::AudienceDetail]
+      def list: (?limit: Integer?, ?offset: Integer?) -> Response[Models::AudienceList]
+      def pages: (?limit: Integer?, ?offset: Integer) -> Enumerator::Lazy[Response[Models::AudienceList], void]
+      def get: (String id) -> Response[Models::AudienceDetail]
+      def update: (String id, ?name: String?, ?description: String?, ?active: bool?) -> Response[Models::UpdatedResource]
+      def delete: (String id) -> Response[untyped]
+    end
+
+    class Contacts < Base
+      include Internal::Constants
+
+      def create: (String audience_id, email: String, ?first_name: String?, ?last_name: String?,
+                   ?metadata: json_object?) -> Response[Models::Contact]
+      def list: (String audience_id, ?limit: Integer?, ?offset: Integer?) -> Response[Models::ContactList]
+      def pages: (String audience_id, ?limit: Integer?, ?offset: Integer) -> Enumerator::Lazy[Response[Models::ContactList], void]
+      def bulk_add: (String audience_id, contacts: Array[item]) -> Response[Models::BulkAddContactsResult]
+      def update: (String audience_id, String contact_id, ?first_name: String?, ?last_name: String?,
+                   ?metadata: json_object?) -> Response[Models::UpdatedResource]
+      def delete: (String audience_id, String contact_id) -> Response[untyped]
+    end
+
+    class Broadcasts < Base
+      include Internal::Constants
+
+      def create: (audience_id: String, from_email: String, ?template_id: String?, ?subject: String?,
+                   ?html: String?, ?text: String?, ?reply_to: String?,
+                   ?variables: json_object?) -> Response[Models::BroadcastDetail]
+      def list: (?status: String?, ?from: (Time | String)?, ?to: (Time | String)?, ?after: String?,
+                 ?limit: Integer?) -> Response[Models::BroadcastList]
+      def pages: (**untyped filters) -> Enumerator::Lazy[Response[Models::BroadcastList], void]
+      def get: (String id) -> Response[Models::BroadcastDetail]
+      def send: (String id) -> Response[Models::SentBroadcast]
+      def test_send: (String id, to: String, ?variables: json_object?) -> Response[Models::TestSendResult]
+      def cancel: (String id) -> Response[Models::CancelledBroadcast]
+
+      private
+
+      def broadcast: [T] (String name, String http_method, String path, Internal::decoder[T] decoder,
+                          **untyped options) -> Response[T]
+    end
+
+    class Senders < Base
+      include Internal::Constants
+
+      def create: (email: String, ?display_name: String?) -> Response[Models::SenderDetail]
+      def list: () -> Response[Models::SenderList]
+      def verify: (token: String) -> Response[Models::VerifiedSender]
+      def delete: (String id) -> Response[untyped]
+    end
+
+    class Suppressions < Base
+      include Internal::Constants
+
+      def create: (email: String, ?reason: String?, ?expires_at: (Time | String)?) -> Response[Models::SuppressionDetail]
+      def list: (?status: String?, ?reason: String?, ?source: String?, ?category: String?, ?after: String?,
+                 ?limit: Integer?) -> Response[Models::SuppressionList]
+      def pages: (**untyped filters) -> Enumerator::Lazy[Response[Models::SuppressionList], void]
+      def get: (String id) -> Response[Models::SuppressionDetail]
+      def delete: (String id) -> Response[untyped]
+      def reactivate: (String id) -> Response[untyped]
+      def bulk_create: (suppressions: Array[item]) -> Response[Models::BulkSuppressionsResult]
+    end
+
+    class Webhooks < Base
+      include Internal::Constants
+
+      def create: (url: String, events: Array[String], ?description: String?) -> Response[Models::WebhookDetail]
+      def list: (?status: String?) -> Response[Models::WebhookList]
+      def get: (String id) -> Response[Models::WebhookDetail]
+      def update: (String id, ?url: String?, ?events: Array[String]?, ?description: String?) -> Response[Models::WebhookDetail]
+      def toggle: (String id, status: String) -> Response[Models::ToggledWebhook]
+      def delete: (String id) -> Response[untyped]
+      def rotate_secret: (String id) -> Response[Models::RotatedSecret]
+      def list_deliveries: (String id, ?event_type: String?, ?status: String?, ?from: (Time | String)?,
+                            ?to: (Time | String)?, ?limit: Integer?) -> Response[Models::WebhookDeliveryList]
+      def test: (String id) -> Response[Models::WebhookTestResult]
+    end
+
+    class Stats < Base
+      include Internal::Constants
+
+      def get: (?domain_id: String?, ?tag: String?, ?start_date: (Time | String)?, ?end_date: (Time | String)?,
+                ?granularity: String?, ?period: String?, ?email_type: String?) -> Response[Models::Stats]
+    end
+  end
+end

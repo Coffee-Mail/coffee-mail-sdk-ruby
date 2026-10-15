@@ -1,0 +1,40 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "json"
+require "net/http"
+require "uri"
+
+SOURCE_VARIABLE = "COFFEEMAIL_OPENAPI_SPEC"
+DEFAULT_SOURCE = "https://api.coffeemail.com.br/v1/product/docs/json"
+SNAPSHOT_PATH = File.expand_path("../openapi/product.json", __dir__)
+HTTP_SCHEME = /\Ahttps?:/
+FETCH_TIMEOUT_SECONDS = 30
+DRIFT_MESSAGE = "openapi/product.json diverge da fonte; rode bin/sync-spec"
+
+def read_source(source)
+  return File.read(source) unless source.match?(HTTP_SCHEME)
+
+  uri = URI(source)
+  response = Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https",
+                                                 open_timeout: FETCH_TIMEOUT_SECONDS,
+                                                 read_timeout: FETCH_TIMEOUT_SECONDS) do |http|
+    http.get(uri.request_uri)
+  end
+  abort("#{source} respondeu #{response.code}") unless response.is_a?(Net::HTTPSuccess)
+  response.body
+end
+
+def normalize(raw)
+  "#{JSON.pretty_generate(JSON.parse(raw))}\n"
+end
+
+source = ENV.fetch(SOURCE_VARIABLE, "").then { |value| value.empty? ? DEFAULT_SOURCE : value }
+normalized = normalize(read_source(source))
+check = ARGV.include?("--check")
+
+abort(DRIFT_MESSAGE) if check && (!File.exist?(SNAPSHOT_PATH) || File.read(SNAPSHOT_PATH) != normalized)
+exit if check
+
+File.write(SNAPSHOT_PATH, normalized)
+puts "openapi/product.json atualizado a partir de #{source}"

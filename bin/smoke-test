@@ -1,0 +1,37 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "fileutils"
+require "open3"
+require "rbconfig"
+require "tmpdir"
+require_relative "../lib/coffeemail/version"
+
+ROOT = File.expand_path("..", __dir__)
+GEM_FILE = "coffeemail-#{CoffeeMail::VERSION}.gem".freeze
+SCRIPT = <<~RUBY
+  require "coffeemail"
+  transport = lambda do |request|
+    abort("URL inesperada: \#{request.url}") unless request.url == "https://api.coffeemail.com.br/v1/product/emails"
+    CoffeeMail::HttpResponse.new(status: 202, headers: {}, body: '{"id":"e1","status":"queued"}')
+  end
+  client = CoffeeMail::Client.new(api_key: "cm_test_smoke", transport: transport)
+  data, error = client.emails.send(from: "app@exemplo.com", to: "ana@exemplo.com", subject: "Oi", text: "Oi")
+  abort("falha: \#{error.inspect}") if error
+  abort("versão: \#{CoffeeMail::VERSION}") unless CoffeeMail::VERSION == ARGV.first
+  puts "smoke ok: \#{data.id}"
+RUBY
+
+def run!(env, *command, chdir:)
+  output, status = Open3.capture2e(env, *command, chdir: chdir)
+  abort("#{command.join(" ")} falhou:\n#{output}") unless status.success?
+  output
+end
+
+Dir.mktmpdir("coffeemail-smoke") do |dir|
+  clean_env = { "BUNDLE_GEMFILE" => nil, "RUBYOPT" => nil, "GEM_HOME" => dir, "GEM_PATH" => dir }
+  run!(clean_env, "gem", "build", "coffeemail.gemspec", "--output", File.join(dir, GEM_FILE), chdir: ROOT)
+  run!(clean_env, "gem", "install", "--local", "--no-document", File.join(dir, GEM_FILE), chdir: dir)
+  File.write(File.join(dir, "smoke.rb"), SCRIPT)
+  puts run!(clean_env, RbConfig.ruby, "smoke.rb", CoffeeMail::VERSION, chdir: dir)
+end

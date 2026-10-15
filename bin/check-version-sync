@@ -1,0 +1,20 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../lib/coffeemail/version"
+require_relative "../tools/version_sync"
+
+ROOT = File.expand_path("..", __dir__)
+tag_index = ARGV.index("--tag")
+problems = Tools::VersionSync.problems(
+  version: CoffeeMail::VERSION,
+  gemspec_version: Gem::Specification.load(File.join(ROOT, "coffeemail.gemspec")).version.to_s,
+  headers_source: File.read(File.join(ROOT, "lib/coffeemail/internal/constants/headers.rb")),
+  changelog: File.read(File.join(ROOT, "CHANGELOG.md")),
+  tag: tag_index && ARGV[tag_index + 1],
+)
+
+problems.each { |problem| warn problem }
+abort("Versões dessincronizadas") unless problems.empty?
+
+puts "Versão sincronizada: #{CoffeeMail::VERSION}"

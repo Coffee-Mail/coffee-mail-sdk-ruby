@@ -1,0 +1,22 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../lib/coffeemail"
+require_relative "../tools/model_signatures"
+
+TARGET = File.expand_path("../sig/coffeemail/generated.rbs", __dir__)
+DRIFT_MESSAGE = "sig/coffeemail/generated.rbs desatualizado; rode bin/generate-signatures"
+
+models = CoffeeMail::Models.constants.sort.map { |name| CoffeeMail::Models.const_get(name) }
+enum_owner = lambda do |value|
+  value.is_a?(Module) && !value.is_a?(Class) && value.const_defined?(:ALL, false) && value != CoffeeMail::Locale
+end
+enum_owners = CoffeeMail.constants.sort.map { |name| CoffeeMail.const_get(name) }.select(&enum_owner)
+enums = enum_owners + [CoffeeMail::Webhook::EventType]
+content = Tools::ModelSignatures.render(models.select { |model| model.const_defined?(:FIELDS) }, enums)
+
+abort(DRIFT_MESSAGE) if ARGV.include?("--check") && (!File.exist?(TARGET) || File.read(TARGET) != content)
+exit if ARGV.include?("--check")
+
+File.write(TARGET, content)
+puts "sig/coffeemail/generated.rbs atualizado"
