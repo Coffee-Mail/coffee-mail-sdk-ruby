@@ -78,9 +78,13 @@ module CoffeeMail
 
       def retryable_error?(error)
         return true if error.is_a?(NetworkError)
-        return error.api_code != Constants::Defaults::PLAN_QUOTA_EXCEEDED if error.is_a?(RateLimitError)
+        return !credits_exhausted?(error) if error.is_a?(RateLimitError)
 
         Constants::Defaults::SERVER_ERROR_STATUSES.cover?(error.status)
+      end
+
+      def credits_exhausted?(error)
+        Constants::Defaults::NON_RETRYABLE_RATE_LIMIT_CODES.include?(error.api_code.to_s)
       end
 
       def build_request(operation)

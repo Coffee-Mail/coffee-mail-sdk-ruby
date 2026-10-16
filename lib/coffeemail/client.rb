@@ -28,6 +28,8 @@ module CoffeeMail
     attr_reader :webhooks
     # @return [Resources::Stats]
     attr_reader :stats
+    # @return [Resources::Validation]
+    attr_reader :validation
 
     # @param api_key [String, nil] chave `cm_live_...`/`cm_test_...`; sem ela, usa `COFFEEMAIL_API_KEY`
     # @param locale [String] {Locale::PT_BR} (padrão) ou {Locale::EN}
@@ -88,6 +90,7 @@ module CoffeeMail
       @suppressions = Resources::Suppressions.new(requester)
       @webhooks = Resources::Webhooks.new(requester)
       @stats = Resources::Stats.new(requester)
+      @validation = Resources::Validation.new(requester)
     end
   end
 end

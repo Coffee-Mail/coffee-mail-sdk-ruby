@@ -16,7 +16,7 @@ module CoffeeMail
 
     # Contato de uma audiência.
     Contact = Internal::Model.define(id: :string, email: :string, first_name: :string, last_name: :string,
-                                     metadata: :hash, created_at: :time)
+                                     metadata: :hash, subscribed: :boolean, created_at: :time)
 
     # Página de `audiences.contacts.list` (paginação por offset).
     ContactList = Internal::Model.define(contacts: [Contact], total: :integer)

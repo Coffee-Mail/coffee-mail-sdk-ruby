@@ -31,6 +31,8 @@ module CoffeeMail
 
       def object(model) = Internal::Model.object(model)
 
+      def optional(model) = Internal::Model.optional(model)
+
       def list_of(model, key = nil) = Internal::Model.list(model, key)
 
       def raw = Internal::Model::RAW

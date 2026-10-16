@@ -181,6 +181,7 @@ module CoffeeMail
     attr_reader suppressions: Resources::Suppressions
     attr_reader webhooks: Resources::Webhooks
     attr_reader stats: Resources::Stats
+    attr_reader validation: Resources::Validation
 
     def initialize: (?api_key: String?, ?locale: String, ?timeout: number, ?retry_policy: RetryPolicy?,
                      ?transport: _Transport?) -> void

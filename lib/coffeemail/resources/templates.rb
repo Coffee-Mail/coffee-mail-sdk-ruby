@@ -89,6 +89,37 @@ module CoffeeMail
         request("test_send", Verbs::POST, route(Routes::TEMPLATE_TEST_SEND, id), object(Models::TestSendResult),
                 body: body({ to:, from:, subject:, variables: }, Internal::Fields::TEMPLATE_TEST_SEND))
       end
+
+      # Lista as versões do template, da mais recente para a mais antiga.
+      #
+      # @param id [String]
+      # @param limit [Integer, nil] de 1 a 100 (padrão da API: 20)
+      # @param offset [Integer, nil]
+      # @return [Response] com {Models::TemplateVersionList}; template inexistente vira {NotFoundError}
+      def list_versions(id, limit: nil, offset: nil)
+        request("list_versions", Verbs::GET, route(Routes::TEMPLATE_VERSIONS, id), object(Models::TemplateVersionList),
+                query: query({ limit:, offset: }, Internal::Fields::LIST_TEMPLATE_VERSIONS))
+      end
+
+      # Busca o conteúdo completo de uma versão.
+      #
+      # @param id [String]
+      # @param version [Integer]
+      # @return [Response] com {Models::TemplateVersion}; template ou versão inexistente vira {NotFoundError}
+      def get_version(id, version)
+        request("get_version", Verbs::GET, route(Routes::TEMPLATE_VERSION, id, version.to_s),
+                object(Models::TemplateVersion))
+      end
+
+      # Restaura o conteúdo de uma versão no template. A restauração gera uma versão nova.
+      #
+      # @param id [String]
+      # @param version [Integer]
+      # @return [Response] com {Models::TemplateDetail}; template ou versão inexistente vira {NotFoundError}
+      def restore_version(id, version)
+        request("restore_version", Verbs::POST, route(Routes::TEMPLATE_VERSION_RESTORE, id, version.to_s),
+                object(Models::TemplateDetail))
+      end
     end
   end
 end

@@ -51,8 +51,38 @@ module CoffeeMail
       # @param id [String]
       # @return [Response] com {Models::DomainWarmup} ou `nil`
       def get_warmup_status(id)
-        request("get_warmup_status", Verbs::GET, route(Routes::DOMAIN_WARMUP, id), object(Models::DomainWarmup),
+        request("get_warmup_status", Verbs::GET, route(Routes::DOMAIN_WARMUP, id), optional(Models::DomainWarmup),
                 empty: nil)
+      end
+
+      # Inicia a rotação da chave DKIM. A chave em uso só muda quando o registro TXT do novo seletor
+      # for encontrado no DNS. Idempotente: com uma rotação pendente, devolve a mesma rotação.
+      #
+      # @param id [String]
+      # @return [Response] com {Models::DkimRotation}; 404 vira {NotFoundError} e 409 (domínio não
+      #   verificado) vira {ConflictError}
+      def rotate_dkim(id)
+        request("rotate_dkim", Verbs::POST, route(Routes::DOMAIN_DKIM_ROTATE, id), object(Models::DkimRotation))
+      end
+
+      # Define o domínio de rastreamento (subdomínio usado nos links de abertura e clique).
+      #
+      # @param id [String]
+      # @param host [String] subdomínio do domínio de envio, ex.: `"links.exemplo.com.br"`
+      # @return [Response] com {Models::CustomHostStatus}; host inválido vira {ValidationError} e o recurso
+      #   desabilitado vira {ConflictError}
+      def set_tracking_domain(id, host:)
+        request("set_tracking_domain", Verbs::PUT, route(Routes::DOMAIN_TRACKING, id),
+                object(Models::CustomHostStatus), body: body({ host: }, Internal::Fields::TRACKING_DOMAIN))
+      end
+
+      # Remove o domínio de rastreamento. `data` é `nil` quando não havia domínio configurado.
+      #
+      # @param id [String]
+      # @return [Response] com {Models::CustomHostStatus} ou `nil`
+      def remove_tracking_domain(id)
+        request("remove_tracking_domain", Verbs::DELETE, route(Routes::DOMAIN_TRACKING, id),
+                optional(Models::CustomHostStatus), empty: nil)
       end
     end
   end

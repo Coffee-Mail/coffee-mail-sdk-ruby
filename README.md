@@ -44,7 +44,7 @@
 - **Seguro entre threads**: crie um `Client` por aplicação e compartilhe.
 - **Retry e paginação automáticos opcionais**: novas tentativas desligadas por padrão (`RetryPolicy`) e `pages` preguiçoso para listas paginadas.
 - **Tipado**: assinaturas RBS em `sig/`, verificadas pelo Steep em modo estrito.
-- **Validado contra o contrato da API**: as 61 operações geram requisições validadas contra o OpenAPI de produto (`openapi/product.json`).
+- **Validado contra o contrato da API**: as 70 operações geram requisições validadas contra o OpenAPI de produto (`openapi/product.json`).
 - **Webhooks verificados com o algoritmo da API**: `CoffeeMail::Webhook` passa nos vetores de teste gerados pelo assinador real.
 
 ## 🚦 Status do projeto
@@ -52,7 +52,7 @@
 | Item | Estado |
 | --- | --- |
 | Versão | `0.1.0` (ainda não publicada) |
-| Cobertura da API de produto | 61 operações (todas as do `product.json`, exceto `GET /v1/product/auth/csrf`, exclusiva do dashboard) |
+| Cobertura da API de produto | 70 operações (todas as do `product.json`, exceto `GET /v1/product/auth/csrf`, exclusiva do dashboard) |
 | Idiomas das mensagens de erro | `pt-BR` (padrão) e `en` |
 | Especificação | [`specs/SPEC.md`](specs/SPEC.md), com cada requisito coberto por teste |
 
@@ -151,13 +151,13 @@ Todo erro herda de `CoffeeMail::Error` (um `StandardError`) e traz `status`, `co
 | rede ou timeout | `NETWORK_ERROR` (status 0) | `NetworkError` (`cause`) |
 | 2xx ilegível | `INVALID_RESPONSE` | `InvalidResponseError` |
 
-Um 429 pode ser excesso de requisições ou cota do plano esgotada. Diferencie pelo `api_code` (`PLAN_QUOTA_EXCEEDED`). Quando a API não manda mensagem (o 401, por exemplo), o SDK usa o catálogo local no `locale` do client. Veja [`examples/error_handling.rb`](examples/error_handling.rb).
+Um 429 pode ser excesso de requisições ou cota do plano esgotada. Diferencie pelo `api_code` (`PLAN_QUOTA_EXCEEDED` para a cota do plano, `VALIDATION_CREDITS_EXHAUSTED` para os créditos de validação do mês). Quando a API não manda mensagem (o 401, por exemplo), o SDK usa o catálogo local no `locale` do client. Veja [`examples/error_handling.rb`](examples/error_handling.rb).
 
 ## 🔁 Novas tentativas
 
 Desligadas por padrão. Com `RetryPolicy.new(max_attempts: 3, base_delay: 0.5, max_delay: 30)`:
 
-- O SDK só repete erros de rede, respostas 5xx e 429 que não sejam `PLAN_QUOTA_EXCEEDED`.
+- O SDK só repete erros de rede, respostas 5xx e 429 que não sejam `PLAN_QUOTA_EXCEEDED` nem `VALIDATION_CREDITS_EXHAUSTED`.
 - GET e DELETE são sempre elegíveis. POST só em `emails.send` e `emails.send_batch`: sem `idempotency_key`, o SDK gera um UUID antes da primeira tentativa e o reutiliza em todas. PUT e PATCH nunca são repetidos.
 - O backoff é exponencial com jitter completo, limitado a `max_delay`. `Retry-After` é honrado com o mesmo teto (a API responde `60`).
 
@@ -201,11 +201,33 @@ Todos os métodos devolvem `CoffeeMail::Response`. Path params são posicionais,
 
 ### Domínios — `client.domains`
 
-`create(name:)` · `list` · `get(id)` · `verify(id)` · `delete(id)` · `get_health(id)` · `get_warmup_status(id)` (`data` é `nil` fora do aquecimento).
+`create(name:)` · `list` · `get(id)` · `verify(id)` · `delete(id)` · `get_health(id)` · `get_warmup_status(id)` (`data` é `nil` fora do aquecimento) · `rotate_dkim(id)` · `set_tracking_domain(id, host:)` · `remove_tracking_domain(id)` (`data` é `nil` quando não havia domínio de rastreamento).
+
+`get(id)` traz `dkim_rotation` (rotação de DKIM pendente), `return_path` e `tracking_domain` (host próprio com o CNAME a publicar e o status da verificação) e `tracking_domains_available`. O aquecimento expõe `status` (`CoffeeMail::DomainWarmupStatus`), `total_days`, `started_at` e `completed_at`.
+
+```ruby
+rotation = client.domains.rotate_dkim(domain_id).unwrap!
+rotation.record.host  # publique este TXT; a chave só muda quando ele for encontrado no DNS
+
+tracking, error = client.domains.set_tracking_domain(domain_id, host: "links.exemplo.com.br")
+tracking.record.value unless error  # alvo do CNAME
+```
+
+`rotate_dkim` é idempotente e devolve `ConflictError` (`api_code == "DOMAIN_NOT_VERIFIED"`) para domínio não verificado. `set_tracking_domain` devolve `ValidationError` (`INVALID_TRACKING_HOST`) para host inválido e `ConflictError` (`TRACKING_DOMAINS_DISABLED`) quando o recurso não está disponível.
 
 ### Templates — `client.templates`
 
-`create(name:, html:, **)` · `list` · `get(id)` · `update(id, **)` · `delete(id)` · `preview(html:, format:, variables:)` · `preview_by_id(id, variables:)` · `format(html:, format:)` · `test_render(html:, format:, variables:)` · `test_send(id, to:, from:, subject:, variables:)`.
+`create(name:, html:, **)` · `list` · `get(id)` · `update(id, **)` · `delete(id)` · `preview(html:, format:, variables:)` · `preview_by_id(id, variables:)` · `format(html:, format:)` · `test_render(html:, format:, variables:)` · `test_send(id, to:, from:, subject:, variables:)` · `list_versions(id, limit:, offset:)` · `get_version(id, version)` · `restore_version(id, version)`.
+
+Cada alteração gera uma versão. `list_versions` devolve `data` (da mais recente para a mais antiga) e `total`; `restore_version` aplica o conteúdo da versão ao template e gera uma versão nova. Template ou versão inexistente vira `NotFoundError` (`api_code` `TEMPLATE_NOT_FOUND` ou `TEMPLATE_VERSION_NOT_FOUND`).
+
+```ruby
+versions = client.templates.list_versions(template_id, limit: 10).unwrap!
+previous = client.templates.get_version(template_id, versions.data[1].version).unwrap!
+client.templates.restore_version(template_id, previous.version)
+```
+
+No envio, `template_id` aceita o id ou o alias do template: `client.emails.send(from:, to:, template_id: "boas-vindas")`.
 
 ### Audiências e contatos — `client.audiences`
 
@@ -227,11 +249,25 @@ Todos os métodos devolvem `CoffeeMail::Response`. Path params são posicionais,
 
 ### Webhooks — `client.webhooks`
 
-`create(url:, events:, description:)` (o `secret` vem só nesta resposta) · `list(status:)` · `get(id)` · `update(id, **)` · `toggle(id, status:)` · `delete(id)` · `rotate_secret(id)` · `list_deliveries(id, **filtros)` · `test(id)`.
+`create(url:, events:, description:)` (o `secret` vem só nesta resposta) · `list(status:)` · `get(id)` · `update(id, **)` · `toggle(id, status:)` · `delete(id)` · `rotate_secret(id)` · `list_deliveries(id, **filtros)` · `test(id)` · `get_delivery(id, delivery_id)` · `replay_delivery(id, delivery_id)`.
+
+`get_delivery` traz o corpo enviado em `request_payload`. `replay_delivery` reenvia esse corpo como uma entrega nova (status 202) e devolve `ConflictError` com `api_code` `WEBHOOK_DELIVERY_PENDING` (a entrega ainda está pendente) ou `WEBHOOK_NOT_ACTIVE` (webhook pausado).
 
 ### Estatísticas — `client.stats`
 
 `get(domain_id:, tag:, start_date:, end_date:, granularity:, period:, email_type:)`.
+
+### Validação de e-mails — `client.validation`
+
+`validate(emails)` confere formato, MX e domínio descartável de 1 a 100 endereços. Cada endereço consome um crédito de validação do mês.
+
+```ruby
+result, error = client.validation.validate(["ana@exemplo.com", "teste@descartavel.com"])
+result.items.reject(&:mx_valid).map(&:reason) unless error
+result.credits.remaining  # nil quando o plano é ilimitado
+```
+
+Com os créditos do mês esgotados, o erro é `RateLimitError` com `api_code == "VALIDATION_CREDITS_EXHAUSTED"`, e a `RetryPolicy` não repete a chamada.
 
 ## 🔔 Webhooks
 
@@ -278,7 +314,7 @@ bundle exec bundler-audit check --update
 
 - O desenvolvimento é guiado por especificação: todo requisito de [`specs/SPEC.md`](specs/SPEC.md) tem teste, e o nome de cada teste começa pelo ID do requisito.
 - Os testes usam um transporte falso injetado por `transport:`; nenhum teste acessa a API.
-- `spec/conformance` valida as requisições das 61 operações contra `openapi/product.json` e falha se alguma operação do spec ficar sem método.
+- `spec/conformance` valida as requisições das 70 operações contra `openapi/product.json` e falha se alguma operação do spec ficar sem método.
 - `spec/webhook_spec.rb` roda os vetores compartilhados de `spec/fixtures/webhook_vectors.json`, gerados pelo assinador da API.
 
 Para atualizar o snapshot do spec:

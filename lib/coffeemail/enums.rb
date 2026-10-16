@@ -33,6 +33,16 @@ module CoffeeMail
     Internal::Enum.define(self, %w[healthy warning critical])
   end
 
+  # Status do aquecimento de um domínio: `warming` e `completed`.
+  module DomainWarmupStatus
+    Internal::Enum.define(self, %w[warming completed])
+  end
+
+  # Tipo de um registro DNS a publicar: `TXT` e `CNAME`.
+  module DnsRecordType
+    Internal::Enum.define(self, %w[TXT CNAME])
+  end
+
   # Resultado da consulta DNS: `found`, `absent` e `unknown`.
   module DnsResolution
     Internal::Enum.define(self, %w[found absent unknown])
