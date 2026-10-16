@@ -15,6 +15,7 @@ module CoffeeMail
       def body: (Hash[Symbol, untyped] values, Internal::Fields::table table) -> Hash[String, untyped]
       def query: (Hash[Symbol, untyped] values, Internal::Fields::table table) -> Hash[String, String]
       def object: [T] (Internal::_Model[T] model) -> Internal::decoder[T]
+      def optional: [T] (Internal::_Model[T] model) -> Internal::decoder[T?]
       def list_of: [T] (Internal::_Model[T] model, ?String? key) -> Internal::decoder[Array[T]]
       def raw: () -> Internal::decoder[untyped]
     end
@@ -52,7 +53,10 @@ module CoffeeMail
       def verify: (String id) -> Response[Models::DomainVerification]
       def delete: (String id) -> Response[Models::DeletedDomain]
       def get_health: (String id) -> Response[Models::DomainHealth]
-      def get_warmup_status: (String id) -> Response[Models::DomainWarmup]
+      def get_warmup_status: (String id) -> Response[Models::DomainWarmup?]
+      def rotate_dkim: (String id) -> Response[Models::DkimRotation]
+      def set_tracking_domain: (String id, host: String) -> Response[Models::CustomHostStatus]
+      def remove_tracking_domain: (String id) -> Response[Models::CustomHostStatus?]
     end
 
     class Templates < Base
@@ -73,6 +77,9 @@ module CoffeeMail
       def test_render: (html: String, ?format: String?, ?variables: json_object?) -> Response[Models::TestRenderResult]
       def test_send: (String id, to: String, ?from: String?, ?subject: String?,
                       ?variables: json_object?) -> Response[Models::TestSendResult]
+      def list_versions: (String id, ?limit: Integer?, ?offset: Integer?) -> Response[Models::TemplateVersionList]
+      def get_version: (String id, Integer version) -> Response[Models::TemplateVersion]
+      def restore_version: (String id, Integer version) -> Response[Models::TemplateDetail]
     end
 
     class Audiences < Base
@@ -157,6 +164,8 @@ module CoffeeMail
       def list_deliveries: (String id, ?event_type: String?, ?status: String?, ?from: (Time | String)?,
                             ?to: (Time | String)?, ?limit: Integer?) -> Response[Models::WebhookDeliveryList]
       def test: (String id) -> Response[Models::WebhookTestResult]
+      def get_delivery: (String id, String delivery_id) -> Response[Models::WebhookDeliveryDetail]
+      def replay_delivery: (String id, String delivery_id) -> Response[Models::WebhookDeliveryDetail]
     end
 
     class Stats < Base
@@ -164,6 +173,12 @@ module CoffeeMail
 
       def get: (?domain_id: String?, ?tag: String?, ?start_date: (Time | String)?, ?end_date: (Time | String)?,
                 ?granularity: String?, ?period: String?, ?email_type: String?) -> Response[Models::Stats]
+    end
+
+    class Validation < Base
+      include Internal::Constants
+
+      def validate: (Array[String] emails) -> Response[Models::EmailValidationResult]
     end
   end
 end

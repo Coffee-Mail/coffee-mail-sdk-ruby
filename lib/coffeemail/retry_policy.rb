@@ -4,7 +4,7 @@ module CoffeeMail
   # Política de novas tentativas automáticas. Desligada por padrão; ativa com `max_attempts > 1`.
   #
   # Só são repetidos erros de rede, respostas 5xx e 429 que não sejam cota do plano esgotada
-  # (`PLAN_QUOTA_EXCEEDED`). GET e DELETE são sempre elegíveis; POST só no envio de e-mail, que aceita
+  # (`PLAN_QUOTA_EXCEEDED`) nem créditos de validação do mês esgotados (`VALIDATION_CREDITS_EXHAUSTED`). GET e DELETE são sempre elegíveis; POST só no envio de e-mail, que aceita
   # chave de idempotência. Sem chave informada, o SDK gera um UUID antes da primeira tentativa e o
   # reutiliza em todas.
   #

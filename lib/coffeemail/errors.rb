@@ -66,7 +66,8 @@ module CoffeeMail
   # HTTP 409: conflito com o estado atual do recurso.
   class ConflictError < Error; end
 
-  # HTTP 429: limite de requisições ou cota do plano (`api_code == "PLAN_QUOTA_EXCEEDED"`).
+  # HTTP 429: limite de requisições, cota do plano (`api_code == "PLAN_QUOTA_EXCEEDED"`) ou créditos de
+  # validação do mês esgotados (`api_code == "VALIDATION_CREDITS_EXHAUSTED"`).
   class RateLimitError < Error
     # @return [Integer, nil] segundos indicados em `Retry-After`
     attr_reader :retry_after_seconds

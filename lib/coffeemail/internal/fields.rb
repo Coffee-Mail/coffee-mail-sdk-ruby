@@ -54,6 +54,9 @@ module CoffeeMail
         granularity: "granularity", period: "period", email_type: "emailType"
       }.freeze
       DOMAIN = { name: "name" }.freeze
+      TRACKING_DOMAIN = { host: "host" }.freeze
+      LIST_TEMPLATE_VERSIONS = { limit: "limit", offset: "offset" }.freeze
+      VALIDATE = { emails: "emails" }.freeze
     end
   end
 end

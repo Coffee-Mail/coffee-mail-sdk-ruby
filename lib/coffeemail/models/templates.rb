@@ -14,6 +14,21 @@ module CoffeeMail
       created_at: :time, updated_at: :time
     )
 
+    # Resumo de uma versão de template (`templates.list_versions`). `created_by` é `nil` quando a versão
+    # veio de uma API key.
+    TemplateVersionSummary = Internal::Model.define(version: :integer, name: :string, subject: :string,
+                                                    created_by: :string, created_at: :time)
+
+    # Resultado de `templates.list_versions`: versões da mais recente para a mais antiga e o total.
+    TemplateVersionList = Internal::Model.define(data: [TemplateVersionSummary], total: :integer)
+
+    # Conteúdo completo de uma versão de template (`templates.get_version`).
+    TemplateVersion = Internal::Model.define(
+      version: :integer, name: :string, subject: :string, created_by: :string, created_at: :time,
+      template_id: :string, preheader: :string, html: :string, content_json: :untyped, text_payload: :string,
+      variables: [TemplateVariable], format: :string, source_locale: :string
+    )
+
     # Resultado de `templates.preview` e `templates.preview_by_id`.
     RenderedTemplate = Internal::Model.define(html: :string, text: :string)
 

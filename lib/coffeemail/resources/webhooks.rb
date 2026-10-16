@@ -74,6 +74,27 @@ module CoffeeMail
       def test(id)
         request("test", Verbs::POST, route(Routes::WEBHOOK_TEST, id), object(Models::WebhookTestResult))
       end
+
+      # Busca uma entrega com o corpo enviado ao endpoint (`request_payload`).
+      #
+      # @param id [String]
+      # @param delivery_id [String]
+      # @return [Response] com {Models::WebhookDeliveryDetail}; webhook ou entrega inexistente vira {NotFoundError}
+      def get_delivery(id, delivery_id)
+        request("get_delivery", Verbs::GET, route(Routes::WEBHOOK_DELIVERY, id, delivery_id),
+                object(Models::WebhookDeliveryDetail))
+      end
+
+      # Reenvia o mesmo corpo de uma entrega anterior como uma entrega nova.
+      #
+      # @param id [String]
+      # @param delivery_id [String]
+      # @return [Response] com a nova {Models::WebhookDeliveryDetail}; entrega ainda pendente ou webhook
+      #   inativo viram {ConflictError}, e webhook ou entrega inexistente vira {NotFoundError}
+      def replay_delivery(id, delivery_id)
+        request("replay_delivery", Verbs::POST, route(Routes::WEBHOOK_DELIVERY_REPLAY, id, delivery_id),
+                object(Models::WebhookDeliveryDetail))
+      end
     end
   end
 end

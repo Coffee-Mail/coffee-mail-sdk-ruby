@@ -12,8 +12,29 @@ module OperationCases
   DOMAIN = { "id" => "d1", "name" => "x.com", "status" => "verified", "createdAt" => T0,
              "sendingIdentity" => { "provider" => "aws_ses", "state" => "ready" },
              "dnsRecordsToPublish" => [{ "type" => "TXT", "host" => "h", "value" => "v" }] }.freeze
+  RECORD = { "type" => "TXT", "host" => "cm2._domainkey.x.com", "value" => "v=DKIM1; p=abc", "ttl" => 3600 }.freeze
+  DKIM_ROTATION = { "domainId" => UUID, "selector" => "cm2", "startedAt" => T0, "record" => RECORD }.freeze
+  TRACKING = { "host" => "links.x.com", "target" => "track.coffeemail.com.br", "verified" => false,
+               "verifiedAt" => nil,
+               "record" => { "type" => "CNAME", "host" => "links.x.com", "value" => "track.coffeemail.com.br" } }.freeze
   TEMPLATE = { "id" => "t1", "name" => "Boas-vindas", "alias" => "welcome", "html" => "<p>{{nome}}</p>",
                "format" => "html", "variables" => [{ "name" => "nome" }], "isActive" => true }.freeze
+  VERSION_SUMMARY = { "version" => 2, "name" => "Boas-vindas", "subject" => nil, "createdBy" => nil,
+                      "createdAt" => T0 }.freeze
+  TEMPLATE_VERSION = VERSION_SUMMARY.merge("templateId" => UUID, "preheader" => nil, "html" => "<p>v2</p>",
+                                           "contentJson" => nil, "textPayload" => nil,
+                                           "variables" => [{ "name" => "nome" }], "format" => "html",
+                                           "sourceLocale" => "pt-BR").freeze
+  DELIVERY = { "id" => UUID, "webhookId" => UUID, "emailEventId" => nil, "eventType" => "email.delivered",
+               "responseStatus" => 200, "responseBody" => "ok", "attempts" => 1, "lastError" => nil,
+               "status" => "success", "nextRunAt" => T0, "createdAt" => T0,
+               "requestPayload" => '{"type":"email.delivered"}' }.freeze
+  VALIDATION = { "items" => [{ "email" => "a@x.com", "formatValid" => true, "mxValid" => true,
+                               "isDisposable" => false },
+                             { "email" => "b@descartavel.com", "formatValid" => true, "mxValid" => true,
+                               "isDisposable" => true, "reason" => "disposable" }],
+                 "validCount" => 1, "invalidCount" => 1,
+                 "credits" => { "limit" => 1000, "used" => 2, "remaining" => 998 } }.freeze
   AUDIENCE = { "id" => "a1", "name" => "Clientes", "active" => true, "contactsCount" => 2 }.freeze
   CONTACT = { "id" => "c1", "email" => "c@x.com", "firstName" => "Ana", "metadata" => {} }.freeze
   BROADCAST = { "id" => "b1", "audienceId" => "a1", "subject" => "Oi", "fromEmail" => "app@x.com",
@@ -99,6 +120,20 @@ module OperationCases
       call: ->(client) { client.domains.get_health("d1") }, expect_data: ->(data) { data.spf.ok }),
     c(id: "RB-OPS-15", title: "domains.get_warmup_status vazio vira nil", verb: "GET", path: "/domains/d1/warmup",
       reply: [200, ""], call: ->(client) { client.domains.get_warmup_status("d1") }, expect_data: lambda(&:nil?)),
+    c(id: "RB-OPS-74", title: "domains.rotate_dkim", verb: "POST", path: "/domains/d1/dkim/rotate",
+      reply: [200, DKIM_ROTATION], call: ->(client) { client.domains.rotate_dkim("d1") },
+      expect_data: lambda { |data|
+        data.selector == "cm2" && data.started_at.is_a?(Time) && data.record.type == CoffeeMail::DnsRecordType::TXT
+      }),
+    c(id: "RB-OPS-75", title: "domains.set_tracking_domain", verb: "PUT", path: "/domains/d1/tracking-domain",
+      reply: [200, TRACKING], call: ->(client) { client.domains.set_tracking_domain("d1", host: "links.x.com") },
+      body: { "host" => "links.x.com" },
+      expect_data: lambda { |data|
+        data.verified == false && data.verified_at.nil? && data.record.type == CoffeeMail::DnsRecordType::CNAME
+      }),
+    c(id: "RB-OPS-76", title: "domains.remove_tracking_domain", verb: "DELETE", path: "/domains/d1/tracking-domain",
+      reply: [200, TRACKING], call: ->(client) { client.domains.remove_tracking_domain("d1") },
+      expect_data: ->(data) { data.host == "links.x.com" }),
     c(id: "RB-OPS-16", title: "templates.create", verb: "POST", path: "/templates", reply: [201, TEMPLATE],
       call: lambda { |client|
         client.templates.create(name: "Boas-vindas", html: "<p>{{nome}}</p>", alias: "welcome", format: "html",
@@ -133,6 +168,22 @@ module OperationCases
       reply: [200, { "success" => true, "messageId" => "m1", "recipient" => "a@x.com" }],
       call: ->(client) { client.templates.test_send("t1", to: "a@x.com", subject: "Teste") },
       body: { "to" => "a@x.com", "subject" => "Teste" }, expect_data: ->(data) { data.message_id == "m1" }),
+    c(id: "RB-OPS-80", title: "templates.list_versions", verb: "GET", path: "/templates/#{UUID}/versions",
+      reply: [200, { "data" => [VERSION_SUMMARY], "total" => 3 }],
+      call: ->(client) { client.templates.list_versions(UUID, limit: 5, offset: 10) },
+      query: { "limit" => "5", "offset" => "10" },
+      expect_data: lambda { |data|
+        data.total == 3 && data.data.first.version == 2 && data.data.first.created_by.nil? &&
+          data.data.first.created_at.is_a?(Time)
+      }),
+    c(id: "RB-OPS-81", title: "templates.get_version", verb: "GET", path: "/templates/#{UUID}/versions/2",
+      reply: [200, TEMPLATE_VERSION], call: ->(client) { client.templates.get_version(UUID, 2) },
+      expect_data: lambda { |data|
+        data.version == 2 && data.html == "<p>v2</p>" && data.template_id == UUID && data.variables.first.name == "nome"
+      }),
+    c(id: "RB-OPS-82", title: "templates.restore_version", verb: "POST", path: "/templates/#{UUID}/versions/2/restore",
+      reply: [200, TEMPLATE], call: ->(client) { client.templates.restore_version(UUID, 2) },
+      expect_data: ->(data) { data.is_a?(CoffeeMail::Models::TemplateDetail) && data.alias == "welcome" }),
     c(id: "RB-OPS-26", title: "audiences.create", verb: "POST", path: "/audiences", reply: [201, AUDIENCE],
       call: ->(client) { client.audiences.create(name: "Clientes", description: "Todos") },
       body: { "name" => "Clientes", "description" => "Todos" }, expect_data: ->(data) { data.contacts_count == 2 }),
@@ -282,6 +333,29 @@ module OperationCases
     c(id: "RB-OPS-60", title: "webhooks.test", verb: "POST", path: "/webhooks/w1/test",
       reply: [200, { "status" => "success", "statusCode" => 200 }], call: ->(client) { client.webhooks.test("w1") },
       expect_data: ->(data) { data.status_code == 200 }),
+    c(id: "RB-OPS-86", title: "webhooks.get_delivery", verb: "GET", path: "/webhooks/w1/deliveries/#{UUID}",
+      reply: [200, DELIVERY], call: ->(client) { client.webhooks.get_delivery("w1", UUID) },
+      expect_data: lambda { |data|
+        data.request_payload == '{"type":"email.delivered"}' && data.email_event_id.nil? && data.created_at.is_a?(Time)
+      }),
+    c(id: "RB-OPS-87", title: "webhooks.replay_delivery", verb: "POST",
+      path: "/webhooks/w1/deliveries/#{UUID}/replay",
+      reply: [202, DELIVERY.merge("status" => "pending", "attempts" => 0)],
+      call: ->(client) { client.webhooks.replay_delivery("w1", UUID) },
+      expect_data: ->(data) { data.status == "pending" && data.attempts.zero? }),
+    c(id: "RB-OPS-83", title: "emails.send com alias do template", verb: "POST", path: "/emails",
+      reply: [202, SEND_RESULT],
+      call: ->(client) { client.emails.send(from: "app@x.com", to: "a@x.com", template_id: "boas-vindas_v2") },
+      body: { "from" => { "email" => "app@x.com" }, "to" => [{ "email" => "a@x.com" }],
+              "templateId" => "boas-vindas_v2" },
+      expect_data: ->(data) { data.id == "e1" }),
+    c(id: "RB-OPS-84", title: "validation.validate", verb: "POST", path: "/validate", reply: [200, VALIDATION],
+      call: ->(client) { client.validation.validate(["a@x.com", "b@descartavel.com"]) },
+      body: { "emails" => ["a@x.com", "b@descartavel.com"] },
+      expect_data: lambda { |data|
+        data.valid_count == 1 && data.items.last.is_disposable && data.items.first.reason.nil? &&
+          data.credits.remaining == 998
+      }),
     c(id: "RB-OPS-61", title: "stats.get", verb: "GET", path: "/stats",
       reply: [200, { "totalSent" => 10, "deliveryRate" => 0,
                      "topClients" => [{ "name" => "Gmail", "percentage" => 50 }],

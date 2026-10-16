@@ -25,6 +25,13 @@ module CoffeeMail
       created_at: :time
     )
 
+    # Entrega com o corpo enviado ao endpoint (`webhooks.get_delivery` e `webhooks.replay_delivery`).
+    WebhookDeliveryDetail = Internal::Model.define(
+      id: :string, webhook_id: :string, email_event_id: :string, event_type: :string, response_status: :integer,
+      response_body: :string, attempts: :integer, last_error: :string, status: :string, next_run_at: :time,
+      created_at: :time, request_payload: :string
+    )
+
     # Resultado de `webhooks.list_deliveries`.
     WebhookDeliveryList = Internal::Model.define(deliveries: [WebhookDelivery])
 

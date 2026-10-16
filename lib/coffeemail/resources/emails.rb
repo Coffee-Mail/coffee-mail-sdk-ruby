@@ -13,6 +13,7 @@ module CoffeeMail
       #
       # Endereços aceitam String (`"ana@exemplo.com"`) ou Hash (`{ email:, name: }`). `idempotency_key` vira o
       # header `x-idempotency-key` e `sandbox: true` vira `x-coffeemail-sandbox`; nenhum dos dois vai no corpo.
+      # `template_id` aceita o id ou o alias do template.
       #
       # @example
       #   client.emails.send(from: "app@exemplo.com", to: "ana@exemplo.com", subject: "Oi", html: "<p>Oi</p>")
