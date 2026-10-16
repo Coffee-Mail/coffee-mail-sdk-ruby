@@ -153,7 +153,7 @@ Todas as rotas são relativas a `/v1/product`. Path params são posicionais; o r
 | RB-OPS-61 | `stats.get(**)` | GET `/stats` | domain_id, tag, start_date, end_date, granularity, period, email_type |
 | RB-OPS-62 | `client.introspect(force_refresh: false)` | GET `/auth/me/api-key` | `{id, name, organisation_id, scopes}`. O cache dura 5 min, protegido por `Mutex`. `client.invalidate_api_key_cache` limpa o cache |
 
-`preview_by_id` é composta e não conta como rota: são 65 rotas mais 1 composta (RB-OPS-69 acrescentou a 62ª; RB-OPS-74 a RB-OPS-76, as três de entregabilidade).
+`preview_by_id` é composta e não conta como rota: são 71 rotas mais 1 composta (RB-OPS-69 acrescentou a 62ª; RB-OPS-74 a RB-OPS-76, as três de entregabilidade; RB-OPS-80 a RB-OPS-82, RB-OPS-84, RB-OPS-86 e RB-OPS-87, as seis da onda 4).
 
 Requisitos transversais das operações:
 
@@ -176,6 +176,14 @@ Requisitos transversais das operações:
 | RB-OPS-77 | [M] | `DomainDetail` (`domains.get`) expõe `dkim_rotation` (`DkimRotation`), `return_path` e `tracking_domain` (`CustomHostStatus`) e `tracking_domains_available` (Boolean); `null` ou ausente vira `nil`. Os membros novos vêm depois dos existentes |
 | RB-OPS-78 | [M] | `DomainWarmup` (`domains.get_warmup_status`) expõe `status` (`warming` \| `completed`), `total_days`, `started_at` (`Time`) e `completed_at` (`Time` ou `nil`). Uma resposta JSON `null` vira `data == nil` com sucesso, como o corpo vazio do RB-OPS-15 |
 | RB-OPS-79 | [S] | Enums abertos novos: `CoffeeMail::DomainWarmupStatus` (`WARMING`, `COMPLETED`) e `CoffeeMail::DnsRecordType` (`TXT`, `CNAME`) |
+| RB-OPS-80 | [M] | `templates.list_versions(id, limit: nil, offset: nil)` → GET `/templates/{id}/versions` (offset; `limit` de 1 a 100) → `Models::TemplateVersionList` (`data`: Array de `Models::TemplateVersionSummary` com `version`, `name`, `subject` ou `nil`, `created_by` ou `nil` quando a versão veio de API key, `created_at` como `Time`; `total`). Sem filtros, não envia query. 404 (`TEMPLATE_NOT_FOUND`) vira `NotFoundError` |
+| RB-OPS-81 | [M] | `templates.get_version(id, version)` → GET `/templates/{id}/versions/{version}` → `Models::TemplateVersion` (os campos do resumo + `template_id`, `preheader`, `html`, `content_json`, `text_payload`, `variables`, `format`, `source_locale`). 404 `TEMPLATE_NOT_FOUND` e `TEMPLATE_VERSION_NOT_FOUND` viram `NotFoundError`, com o código em `api_code` |
+| RB-OPS-82 | [M] | `templates.restore_version(id, version)` → POST `/templates/{id}/versions/{version}/restore`, sem corpo → `Models::TemplateDetail`. 404 `TEMPLATE_NOT_FOUND` e `TEMPLATE_VERSION_NOT_FOUND` viram `NotFoundError` |
+| RB-OPS-83 | [M] | `template_id` em `emails.send` e `emails.send_batch` aceita o id ou o alias do template e vai como veio, sem validação local de formato (a API exige `^[a-z0-9_-]+$`) |
+| RB-OPS-84 | [M] | `client.validation.validate(emails)` → POST `/validate` com `{emails}` (1 a 100 Strings) → `Models::EmailValidationResult` (`items`: Array de `Models::EmailValidationItem` com `email`, `format_valid`, `mx_valid`, `is_disposable` e `reason` ou `nil`; `valid_count`; `invalid_count`; `credits`: `Models::ValidationCredits` com `limit` e `remaining` `nil` quando ilimitado, e `used`). 400 vira `ValidationError` |
+| RB-OPS-85 | [M] | O 429 `VALIDATION_CREDITS_EXHAUSTED` (créditos de validação do mês esgotados) vira `RateLimitError` com o código em `api_code` e nunca é retentado automaticamente, nem com `RetryPolicy` ligada nem em requisição elegível a retry |
+| RB-OPS-86 | [M] | `webhooks.get_delivery(id, delivery_id)` → GET `/webhooks/{id}/deliveries/{deliveryId}` → `Models::WebhookDeliveryDetail` (os campos de `WebhookDelivery` + `request_payload`, o corpo enviado). 404 `WEBHOOK_NOT_FOUND` e `WEBHOOK_DELIVERY_NOT_FOUND` viram `NotFoundError` |
+| RB-OPS-87 | [M] | `webhooks.replay_delivery(id, delivery_id)` → POST `/webhooks/{id}/deliveries/{deliveryId}/replay`, sem corpo → 202 com a entrega nova (`Models::WebhookDeliveryDetail`). 409 `WEBHOOK_DELIVERY_PENDING` e `WEBHOOK_NOT_ACTIVE` viram `ConflictError`; 404 `WEBHOOK_NOT_FOUND` e `WEBHOOK_DELIVERY_NOT_FOUND` viram `NotFoundError` |
 
 ## 7. Webhooks — `RB-WHK`
 
@@ -197,7 +205,7 @@ Requisitos transversais das operações:
 | --- | --- | --- |
 | RB-DX-01 | [M] | Sem `retry:`, o SDK faz uma única tentativa |
 | RB-DX-02 | [M] | `CoffeeMail::RetryPolicy.new(max_attempts:, base_delay: 0.5, max_delay: 30)` liga o retry quando `max_attempts > 1` |
-| RB-DX-03 | [M] | O retry só acontece em `NetworkError`, 5xx e 429 com `api_code != "PLAN_QUOTA_EXCEEDED"` |
+| RB-DX-03 | [M] | O retry só acontece em `NetworkError`, 5xx e 429 com `api_code` diferente de `PLAN_QUOTA_EXCEEDED` e de `VALIDATION_CREDITS_EXHAUSTED` (RB-OPS-85) |
 | RB-DX-04 | [M] | Só GET e DELETE são retentados, ou POST com `x-idempotency-key`. Sem chave, o SDK gera `SecureRandom.uuid` antes da 1ª tentativa e reutiliza em todas |
 | RB-DX-05 | [M] | O backoff é exponencial com jitter completo, limitado a `max_delay`. `Retry-After` é honrado, também limitado a `max_delay`. O sleep e o aleatório são injetáveis para teste |
 | RB-DX-06 | [M] | O PATCH e o PUT não são retentados |

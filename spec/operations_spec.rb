@@ -174,6 +174,105 @@ RSpec.describe "Operações do contrato" do
     end
   end
 
+  describe "Fase 4 do contrato: versões, validação e reenvio de entregas" do
+    def api_error(status, code)
+      FakeTransport.json(status, { "error" => { "code" => code, "message" => code } })
+    end
+
+    def failure(status, code)
+      error = yield(client_with(api_error(status, code))).error
+      [error.class, error.api_code]
+    end
+
+    def not_found(code) = [CoffeeMail::NotFoundError, code]
+
+    def conflict(code) = [CoffeeMail::ConflictError, code]
+
+    it "RB-OPS-80 list_versions sem filtros não envia query e mapeia 404" do
+      transport = FakeTransport.json(200, { "data" => [], "total" => 0 })
+      data = client_with(transport).templates.list_versions(OperationCases::UUID).data
+
+      expect([data.data, data.total, transport.last_query]).to eq([[], 0, {}])
+      expect(failure(404, "TEMPLATE_NOT_FOUND") { |client| client.templates.list_versions("x") })
+        .to eq(not_found("TEMPLATE_NOT_FOUND"))
+    end
+
+    it "RB-OPS-81 get_version mapeia template e versão inexistentes para NotFoundError" do
+      expect(failure(404, "TEMPLATE_NOT_FOUND") { |client| client.templates.get_version("x", 1) })
+        .to eq(not_found("TEMPLATE_NOT_FOUND"))
+      expect(failure(404, "TEMPLATE_VERSION_NOT_FOUND") { |client| client.templates.get_version("t1", 99) })
+        .to eq(not_found("TEMPLATE_VERSION_NOT_FOUND"))
+    end
+
+    it "RB-OPS-82 restore_version mapeia template e versão inexistentes para NotFoundError" do
+      expect(failure(404, "TEMPLATE_NOT_FOUND") { |client| client.templates.restore_version("x", 1) })
+        .to eq(not_found("TEMPLATE_NOT_FOUND"))
+      expect(failure(404, "TEMPLATE_VERSION_NOT_FOUND") { |client| client.templates.restore_version("t1", 99) })
+        .to eq(not_found("TEMPLATE_VERSION_NOT_FOUND"))
+    end
+
+    it "RB-OPS-83 template_id aceita UUID ou alias e vai como veio, inclusive no lote" do
+      transport = FakeTransport.json(202, [{ "ok" => true, "data" => OperationCases::SEND_RESULT }])
+      client_with(transport).emails.send_batch([{ from: "app@x.com", to: "a@x.com", template_id: "welcome" },
+                                                { from: "app@x.com", to: "b@x.com",
+                                                  template_id: OperationCases::UUID }])
+
+      expect(transport.last_body.map { |item| item["templateId"] }).to eq(["welcome", OperationCases::UUID])
+    end
+
+    it "RB-OPS-84 créditos ilimitados vêm como nil" do
+      reply = OperationCases::VALIDATION.merge("credits" => { "limit" => nil, "used" => 7, "remaining" => nil })
+      credits = client_with(FakeTransport.json(200, reply)).validation.validate(["a@x.com"]).data.credits
+
+      expect([credits.limit, credits.used, credits.remaining]).to eq([nil, 7, nil])
+    end
+
+    it "RB-OPS-84 validação inválida vira ValidationError" do
+      expect(failure(400, "VALIDATION_ERROR") { |client| client.validation.validate([]) })
+        .to eq([CoffeeMail::ValidationError, "VALIDATION_ERROR"])
+    end
+
+    it "RB-OPS-85 créditos esgotados viram RateLimitError e não são retentados" do
+      policy = CoffeeMail::RetryPolicy.new(max_attempts: 3, base_delay: 0.001, max_delay: 0.001)
+      exhausted = FakeTransport.reply(429, { "error" => { "code" => "VALIDATION_CREDITS_EXHAUSTED",
+                                                          "message" => "Créditos esgotados" } })
+      transport = FakeTransport.new(exhausted, FakeTransport.reply(200, OperationCases::VALIDATION))
+      error = client_with(transport, retry_policy: policy).validation.validate(["a@x.com"]).error
+      repeatable = FakeTransport.new(exhausted, FakeTransport.reply(200, OperationCases::VALIDATION))
+      options = CoffeeMail::Internal::Options.build(api_key: API_KEY, locale: "pt-BR", timeout: 1,
+                                                    retry_policy: policy, transport: repeatable)
+      get = CoffeeMail::Internal::Operation.build(name: "validation.test", http_method: "GET", path: "/validate",
+                                                  decoder: CoffeeMail::Internal::Model::RAW)
+      idempotent = CoffeeMail::Internal::Requester.new(options, sleeper: ->(_) {}, random: Random.new(1)).call(get)
+
+      expect([error.class, error.api_code, error.message])
+        .to eq([CoffeeMail::RateLimitError, "VALIDATION_CREDITS_EXHAUSTED", "Créditos esgotados"])
+      expect(transport.requests.size).to eq(1)
+      expect(idempotent.error.api_code).to eq("VALIDATION_CREDITS_EXHAUSTED")
+      expect(repeatable.requests.size).to eq(1)
+    end
+
+    it "RB-OPS-86 get_delivery mapeia webhook e entrega inexistentes para NotFoundError" do
+      expect(failure(404, "WEBHOOK_NOT_FOUND") { |client| client.webhooks.get_delivery("x", OperationCases::UUID) })
+        .to eq(not_found("WEBHOOK_NOT_FOUND"))
+      expect(failure(404, "WEBHOOK_DELIVERY_NOT_FOUND") { |client| client.webhooks.get_delivery("w1", "x") })
+        .to eq(not_found("WEBHOOK_DELIVERY_NOT_FOUND"))
+    end
+
+    it "RB-OPS-87 replay_delivery devolve entrega nova e mapeia 409 e 404" do
+      reply = OperationCases::DELIVERY.merge("id" => "0f6a4e8b-3c2d-4f1a-9b7e-1a2b3c4d5e6f", "status" => "pending")
+      replayed = client_with(FakeTransport.json(202, reply)).webhooks.replay_delivery("w1", OperationCases::UUID)
+
+      expect([replayed.status, replayed.data.id]).to eq([202, reply["id"]])
+      expect(failure(409, "WEBHOOK_DELIVERY_PENDING") { |client| client.webhooks.replay_delivery("w1", "d") })
+        .to eq(conflict("WEBHOOK_DELIVERY_PENDING"))
+      expect(failure(409, "WEBHOOK_NOT_ACTIVE") { |client| client.webhooks.replay_delivery("w1", "d") })
+        .to eq(conflict("WEBHOOK_NOT_ACTIVE"))
+      expect(failure(404, "WEBHOOK_DELIVERY_NOT_FOUND") { |client| client.webhooks.replay_delivery("w1", "d") })
+        .to eq(not_found("WEBHOOK_DELIVERY_NOT_FOUND"))
+    end
+  end
+
   describe "templates.preview_by_id" do
     it "RB-OPS-22 busca o template e renderiza o HTML dele" do
       transport = FakeTransport.new(FakeTransport.reply(200, OperationCases::TEMPLATE),

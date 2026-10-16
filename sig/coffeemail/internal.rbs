@@ -25,6 +25,8 @@ module CoffeeMail
         KEY_PREFIX_PATTERN: Regexp
         FULL_ACCESS_PERMISSION: String
         PLAN_QUOTA_EXCEEDED: String
+        VALIDATION_CREDITS_EXHAUSTED: String
+        NON_RETRYABLE_RATE_LIMIT_CODES: Array[String]
         FORBIDDEN_STATUS: Integer
         RATE_LIMIT_STATUS: Integer
         SERVER_ERROR_STATUSES: Range[Integer]
@@ -76,6 +78,9 @@ module CoffeeMail
         TEMPLATES_FORMAT: String
         TEMPLATES_TEST_RENDER: String
         TEMPLATE_TEST_SEND: String
+        TEMPLATE_VERSIONS: String
+        TEMPLATE_VERSION: String
+        TEMPLATE_VERSION_RESTORE: String
         AUDIENCES: String
         AUDIENCE: String
         CONTACTS: String
@@ -99,6 +104,9 @@ module CoffeeMail
         WEBHOOK_ROTATE_SECRET: String
         WEBHOOK_DELIVERIES: String
         WEBHOOK_TEST: String
+        WEBHOOK_DELIVERY: String
+        WEBHOOK_DELIVERY_REPLAY: String
+        VALIDATE: String
         STATS: String
         API_KEY_INTROSPECTION: String
       end
@@ -191,6 +199,8 @@ module CoffeeMail
       WEBHOOK_TOGGLE: table
       LIST_WEBHOOKS: table
       LIST_DELIVERIES: table
+      LIST_TEMPLATE_VERSIONS: table
+      VALIDATE: table
       STATS: table
       DOMAIN: table
       TRACKING_DOMAIN: table
@@ -326,6 +336,7 @@ module CoffeeMail
       def retry?: (RetryPolicy policy, HttpRequest request, Error error, Integer attempt) -> bool
       def retryable_request?: (HttpRequest request) -> bool
       def retryable_error?: (Error error) -> bool
+      def credits_exhausted?: (Error error) -> bool
       def build_request: (Operation operation) -> HttpRequest
       def url: (Operation operation) -> String
       def headers: (Operation operation, String? body) -> Hash[String, String]

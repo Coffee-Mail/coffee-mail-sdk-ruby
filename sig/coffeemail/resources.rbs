@@ -77,6 +77,9 @@ module CoffeeMail
       def test_render: (html: String, ?format: String?, ?variables: json_object?) -> Response[Models::TestRenderResult]
       def test_send: (String id, to: String, ?from: String?, ?subject: String?,
                       ?variables: json_object?) -> Response[Models::TestSendResult]
+      def list_versions: (String id, ?limit: Integer?, ?offset: Integer?) -> Response[Models::TemplateVersionList]
+      def get_version: (String id, Integer version) -> Response[Models::TemplateVersion]
+      def restore_version: (String id, Integer version) -> Response[Models::TemplateDetail]
     end
 
     class Audiences < Base
@@ -161,6 +164,8 @@ module CoffeeMail
       def list_deliveries: (String id, ?event_type: String?, ?status: String?, ?from: (Time | String)?,
                             ?to: (Time | String)?, ?limit: Integer?) -> Response[Models::WebhookDeliveryList]
       def test: (String id) -> Response[Models::WebhookTestResult]
+      def get_delivery: (String id, String delivery_id) -> Response[Models::WebhookDeliveryDetail]
+      def replay_delivery: (String id, String delivery_id) -> Response[Models::WebhookDeliveryDetail]
     end
 
     class Stats < Base
@@ -168,6 +173,12 @@ module CoffeeMail
 
       def get: (?domain_id: String?, ?tag: String?, ?start_date: (Time | String)?, ?end_date: (Time | String)?,
                 ?granularity: String?, ?period: String?, ?email_type: String?) -> Response[Models::Stats]
+    end
+
+    class Validation < Base
+      include Internal::Constants
+
+      def validate: (Array[String] emails) -> Response[Models::EmailValidationResult]
     end
   end
 end
