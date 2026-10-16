@@ -18,6 +18,48 @@ RSpec.describe "Operações do contrato" do
     end
   end
 
+  describe "Fase 2 do contrato" do
+    it "RB-OPS-69 resend_verification mapeia 409 e 404 para erros tipados" do
+      conflict = FakeTransport.json(409, { "error" => { "code" => "CONFLICT", "message" => "já verificado" } })
+      missing = FakeTransport.json(404, { "error" => { "code" => "NOT_FOUND", "message" => "não existe" } })
+
+      expect(client_with(conflict).senders.resend_verification("se1").error).to be_a(CoffeeMail::ConflictError)
+      expect(client_with(missing).senders.resend_verification("x").error).to be_a(CoffeeMail::NotFoundError)
+    end
+
+    it "RB-OPS-70 scheduled_at aceita String ISO 8601" do
+      transport = FakeTransport.json(201, OperationCases::BROADCAST)
+      client_with(transport).broadcasts.create(audience_id: "a1", from_email: "app@x.com", template_id: "t1",
+                                               scheduled_at: "2030-01-01T10:00:00Z")
+
+      expect(transport.last_body["scheduledAt"]).to eq("2030-01-01T10:00:00Z")
+    end
+
+    it "RB-OPS-71 broadcasts.get expõe metrics; ausente vira nil" do
+      metrics = { "delivered" => 9, "opened" => 4, "clicked" => 1, "bounced" => 1, "failed" => 0, "suppressed" => 2 }
+      with = FakeTransport.json(200, OperationCases::BROADCAST.merge("metrics" => metrics))
+      without = FakeTransport.json(200, OperationCases::BROADCAST)
+
+      expect(client_with(with).broadcasts.get("b1").data.metrics.delivered).to eq(9)
+      expect(client_with(without).broadcasts.get("b1").data.metrics).to be_nil
+    end
+
+    it "RB-OPS-72 contato descadastrado e contato sem o campo" do
+      page = { "contacts" => [OperationCases::CONTACT.merge("subscribed" => false), OperationCases::CONTACT],
+               "total" => 2 }
+      contacts = client_with(FakeTransport.json(200, page)).audiences.contacts.list("a1").data.contacts
+
+      expect(contacts.map(&:subscribed)).to eq([false, nil])
+    end
+
+    it "RB-OPS-73 senders.create sem token na resposta deixa verification_token nil" do
+      reply = { "id" => "se1", "email" => "app@x.com", "active" => false }
+      created = client_with(FakeTransport.json(201, reply)).senders.create(email: "app@x.com").data
+
+      expect(created.verification_token).to be_nil
+    end
+  end
+
   describe "templates.preview_by_id" do
     it "RB-OPS-22 busca o template e renderiza o HTML dele" do
       transport = FakeTransport.new(FakeTransport.reply(200, OperationCases::TEMPLATE),

@@ -56,7 +56,7 @@ RSpec.describe "Conformidade com openapi/product.json" do
 
     expect(mapped).not_to include(nil)
     expect(spec_operations - browser_only - mapped.uniq).to be_empty
-    expect(spec_operations.size - browser_only.size).to eq(61)
+    expect(spec_operations.size - browser_only.size).to eq(62)
   end
 
   it "RB-OPS-64 corpo e query de cada operação são válidos contra o schema" do

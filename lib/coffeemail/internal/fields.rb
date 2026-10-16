@@ -32,7 +32,7 @@ module CoffeeMail
       CONTACTS_BULK = { contacts: ["contacts", CONTACT] }.freeze
       BROADCAST = {
         audience_id: "audienceId", from_email: "fromEmail", template_id: "templateId", subject: "subject",
-        html: "html", text: "text", reply_to: "replyTo", variables: "variables"
+        html: "html", text: "text", reply_to: "replyTo", scheduled_at: "scheduledAt", variables: "variables"
       }.freeze
       LIST_BROADCASTS = { status: "status", from: "from", to: "to", after: "after", limit: "limit" }.freeze
       BROADCAST_TEST_SEND = { to: "to", variables: "variables" }.freeze

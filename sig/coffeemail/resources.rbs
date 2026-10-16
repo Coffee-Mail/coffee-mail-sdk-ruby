@@ -106,7 +106,7 @@ module CoffeeMail
 
       def create: (audience_id: String, from_email: String, ?template_id: String?, ?subject: String?,
                    ?html: String?, ?text: String?, ?reply_to: String?,
-                   ?variables: json_object?) -> Response[Models::BroadcastDetail]
+                   ?variables: json_object?, ?scheduled_at: (Time | String)?) -> Response[Models::BroadcastDetail]
       def list: (?status: String?, ?from: (Time | String)?, ?to: (Time | String)?, ?after: String?,
                  ?limit: Integer?) -> Response[Models::BroadcastList]
       def pages: (**untyped filters) -> Enumerator::Lazy[Response[Models::BroadcastList], void]
@@ -127,6 +127,7 @@ module CoffeeMail
       def create: (email: String, ?display_name: String?) -> Response[Models::SenderDetail]
       def list: () -> Response[Models::SenderList]
       def verify: (token: String) -> Response[Models::VerifiedSender]
+      def resend_verification: (String id) -> Response[untyped]
       def delete: (String id) -> Response[untyped]
     end
 

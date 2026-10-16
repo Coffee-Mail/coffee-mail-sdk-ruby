@@ -11,8 +11,9 @@ module CoffeeMail
 
       # @return [Response] com {Models::BroadcastDetail}
       def create(audience_id:, from_email:, template_id: nil, subject: nil, html: nil, text: nil, reply_to: nil,
-                 variables: nil)
-        values = { audience_id:, from_email:, template_id:, subject:, html:, text:, reply_to:, variables: }
+                 variables: nil, scheduled_at: nil)
+        values = { audience_id:, from_email:, template_id:, subject:, html:, text:, reply_to:, scheduled_at:,
+                   variables: }
         broadcast("create", Verbs::POST, Routes::BROADCASTS, object(Models::BroadcastDetail),
                   body: body(values, Internal::Fields::BROADCAST))
       end

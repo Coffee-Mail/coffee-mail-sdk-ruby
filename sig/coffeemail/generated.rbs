@@ -204,9 +204,10 @@ class CoffeeMail::Models::BroadcastDetail < Data
   attr_reader recipients_total: Integer?
   attr_reader recipients_queued: Integer?
   attr_reader recipients_failed: Integer?
+  attr_reader metrics: CoffeeMail::Models::BroadcastMetrics?
   attr_reader created_at: Time?
   attr_reader updated_at: Time?
-  def self.new: (?id: String?, ?audience_id: String?, ?audience_name: String?, ?template_id: String?, ?subject: String?, ?from_email: String?, ?reply_to: String?, ?status: String?, ?scheduled_at: Time?, ?sent_at: Time?, ?cancelled_at: Time?, ?recipients_total: Integer?, ?recipients_queued: Integer?, ?recipients_failed: Integer?, ?created_at: Time?, ?updated_at: Time?) -> instance
+  def self.new: (?id: String?, ?audience_id: String?, ?audience_name: String?, ?template_id: String?, ?subject: String?, ?from_email: String?, ?reply_to: String?, ?status: String?, ?scheduled_at: Time?, ?sent_at: Time?, ?cancelled_at: Time?, ?recipients_total: Integer?, ?recipients_queued: Integer?, ?recipients_failed: Integer?, ?metrics: CoffeeMail::Models::BroadcastMetrics?, ?created_at: Time?, ?updated_at: Time?) -> instance
   def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::BroadcastDetail
 end
 
@@ -216,6 +217,18 @@ class CoffeeMail::Models::BroadcastList < Data
   attr_reader next_cursor: String?
   def self.new: (?broadcasts: Array[CoffeeMail::Models::BroadcastDetail]?, ?next_cursor: String?) -> instance
   def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::BroadcastList
+end
+
+class CoffeeMail::Models::BroadcastMetrics < Data
+  FIELDS: Hash[Symbol, untyped]
+  attr_reader delivered: Integer?
+  attr_reader opened: Integer?
+  attr_reader clicked: Integer?
+  attr_reader bounced: Integer?
+  attr_reader failed: Integer?
+  attr_reader suppressed: Integer?
+  def self.new: (?delivered: Integer?, ?opened: Integer?, ?clicked: Integer?, ?bounced: Integer?, ?failed: Integer?, ?suppressed: Integer?) -> instance
+  def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::BroadcastMetrics
 end
 
 class CoffeeMail::Models::BulkAddContactsResult < Data
@@ -269,8 +282,9 @@ class CoffeeMail::Models::Contact < Data
   attr_reader first_name: String?
   attr_reader last_name: String?
   attr_reader metadata: Hash[String, untyped]?
+  attr_reader subscribed: bool?
   attr_reader created_at: Time?
-  def self.new: (?id: String?, ?email: String?, ?first_name: String?, ?last_name: String?, ?metadata: Hash[String, untyped]?, ?created_at: Time?) -> instance
+  def self.new: (?id: String?, ?email: String?, ?first_name: String?, ?last_name: String?, ?metadata: Hash[String, untyped]?, ?subscribed: bool?, ?created_at: Time?) -> instance
   def self.from_wire: (Hash[String, untyped] hash) -> CoffeeMail::Models::Contact
 end
 

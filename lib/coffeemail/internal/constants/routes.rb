@@ -35,6 +35,7 @@ module CoffeeMail
         SENDERS = "/senders"
         SENDERS_VERIFY = "/senders/verify"
         SENDER = "/senders/%s"
+        SENDER_RESEND_VERIFICATION = "/senders/%s/resend-verification"
         SUPPRESSIONS = "/suppressions"
         SUPPRESSIONS_BULK = "/suppressions/bulk"
         SUPPRESSION = "/suppressions/%s"

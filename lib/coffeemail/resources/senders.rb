@@ -26,6 +26,14 @@ module CoffeeMail
                 body: body({ token: }, Internal::Fields::SENDER_VERIFY))
       end
 
+      # Reenvia o e-mail de verificação com um token novo; o anterior expira.
+      #
+      # @param id [String]
+      # @return [Response] com {CoffeeMail::NO_CONTENT}
+      def resend_verification(id)
+        request("resend_verification", Verbs::POST, route(Routes::SENDER_RESEND_VERIFICATION, id), raw)
+      end
+
       # @param id [String]
       # @return [Response] com {CoffeeMail::NO_CONTENT}
       def delete(id)
